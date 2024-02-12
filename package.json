@@ -5,8 +5,9 @@
     "description": "Lancer le EarthKingdoms Launcher",
     "main": "src/app.js",
     "author": {
-        "name": "EarthKingdoms, Inc.",
-        "url": "https://earthkingdoms-minecraft-faction.fr"
+        "name": "Luuxis (base), EarthKingdoms, Inc.",
+        "email": "contact@luuxis.fr",
+        "url": "https://github.com/luuxis"
     },
     "url": "https://files.earthkingdoms-minecraft-faction.fr/launcher/files",
     "scripts": {
