@@ -94,14 +94,14 @@ class Launcher {
                 java_config: {
                     java_path: null,
                     java_memory: {
-                        min: 2,
-                        max: 4
+                        min: 4,
+                        max: 6
                     }
                 },
                 game_config: {
                     screen_size: {
-                        width: 854,
-                        height: 480
+                        width: 1280,
+                        height: 720
                     }
                 },
                 launcher_config: {
@@ -140,10 +140,10 @@ class Launcher {
                     continue
                 }
                 if (account.meta.type === 'Xbox') {
-                    console.log(`Account Type: ${account.meta.type} | Username: ${account.name}`);
+                    console.log(`Account Type : ${account.meta.type} | Username : ${account.name}`);
                     popupRefresh.openPopup({
                         title: 'Connexion',
-                        content: `Refresh account Type: ${account.meta.type} | Username: ${account.name}`,
+                        content: `Refresh account Type : ${account.meta.type} | Username : ${account.name}`,
                         color: 'var(--color)',
                         background: false
                     });
@@ -165,10 +165,10 @@ class Launcher {
                     await addAccount(refresh_accounts)
                     if (account_ID == account_selected) accountSelect(refresh_accounts)
                 } else if (account.meta.type == 'AZauth') {
-                    console.log(`Account Type: ${account.meta.type} | Username: ${account.name}`);
+                    console.log(`Account Type : ${account.meta.type} | Username : ${account.name}`);
                     popupRefresh.openPopup({
                         title: 'Connexion',
-                        content: `Refresh account Type: ${account.meta.type} | Username: ${account.name}`,
+                        content: `Refresh account Type : ${account.meta.type} | Username : ${account.name}`,
                         color: 'var(--color)',
                         background: false
                     });
@@ -189,10 +189,10 @@ class Launcher {
                     await addAccount(refresh_accounts)
                     if (account_ID == account_selected) accountSelect(refresh_accounts)
                 } else if (account.meta.type == 'Mojang') {
-                    console.log(`Account Type: ${account.meta.type} | Username: ${account.name}`);
+                    console.log(`Account Type : ${account.meta.type} | Username : ${account.name}`);
                     popupRefresh.openPopup({
                         title: 'Connexion',
-                        content: `Refresh account Type: ${account.meta.type} | Username: ${account.name}`,
+                        content: `Refresh account Type : ${account.meta.type} | Username : ${account.name}`,
                         color: 'var(--color)',
                         background: false
                     });

@@ -73,7 +73,7 @@ class Login {
             if (emailOffline.value.length < 3) {
                 popupLogin.openPopup({
                     title: 'Erreur',
-                    content: 'Votre pseudo doit faire au moins 3 caractères.',
+                    content: 'Votre Pseudo doit faire au moins 3 caractères.',
                     options: true
                 });
                 return;
@@ -82,7 +82,7 @@ class Login {
             if (emailOffline.value.match(/ /g)) {
                 popupLogin.openPopup({
                     title: 'Erreur',
-                    content: 'Votre pseudo ne doit pas contenir d\'espaces.',
+                    content: 'Votre Pseudo ne doit pas contenir d\'espaces.',
                     options: true
                 });
                 return;

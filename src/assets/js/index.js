@@ -54,7 +54,7 @@ class Splash {
         this.setStatus(`Recherche de mise à jour...`);
 
         ipcRenderer.invoke('update-app').then().catch(err => {
-            return this.shutdown(`erreur lors de la recherche de mise à jour :<br>${err.message}`);
+            return this.shutdown(`Erreur lors de la recherche de mise à jour :<br>${err.message}`);
         });
 
         ipcRenderer.on('updateAvailable', () => {
@@ -73,7 +73,7 @@ class Splash {
         })
 
         ipcRenderer.on('update-not-available', () => {
-            console.error("Mise à jour non disponible");
+            console.error("Aucune Mise à jour disponible");
             this.maintenanceCheck();
         })
     }
@@ -84,7 +84,7 @@ class Splash {
             this.startLauncher();
         }).catch(e => {
             console.error(e);
-            return this.shutdown("Aucune connexion internet détectée,<br>veuillez réessayer ultérieurement.");
+            return this.shutdown("Aucune connexion internet détectée,<br>Veuillez réessayer ultérieurement.");
         })
     }
 

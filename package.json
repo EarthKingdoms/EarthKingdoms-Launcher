@@ -1,20 +1,19 @@
 {
-    "name": "Selvania-Launcher",
-    "preductname": "Selvania Launcher",
-    "version": "2.0.0",
-    "description": "Launcher Mincraft pour le serveur Selvania",
+    "name": "EarthKingdoms-Launcher-TEST",
+    "preductname": "EarthKingdoms Launcher TEST",
+    "version": "2.0.0-beta1",
+    "description": "Launcher Minecraft pour le serveur EarthKingdoms",
     "main": "src/app.js",
     "author": {
-        "name": "luuxis, Inc.",
-        "email": "contact@luuxis.fr",
+        "name": "EarthKingdoms, Inc.",
         "url": "https://github.com/luuxis"
     },
-    "url": "http://launcher.luuxis.fr/launcherSelvania",
+    "url": "https://files.earthkingdoms-minecraft-faction.fr/new",
     "scripts": {
         "start": "cross-env-shell NODE_ENV=dev electron .",
         "dev": "cross-env-shell DEV_TOOL=open nodemon --exec npm start",
         "build": "node build.js --obf=false --build=platform",
-        "icon": "node build.js --icon=https://raw.githubusercontent.com/luuxis/Selvania-Launcher/master/src/assets/images/icon.png"
+        "icon": "node build.js --icon=https://github.com/EarthKingdomsDev/EarthKingdoms-Launcher-V2/master/src/assets/images/icon.png"
     },
     "license": "CCANC",
     "nodemonConfig": {
@@ -39,6 +38,6 @@
     },
     "repository": {
         "type": "git",
-        "url": "git+https://github.com/luuxis/Selvania-Launcher.git"
+        "url": "git+https://github.com/EarthKingdomsDev/EarthKingdoms-Launcher-V2.git"
     }
 }

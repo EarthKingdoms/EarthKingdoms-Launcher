@@ -1,12 +1,15 @@
 .settings .container {
     display: flex;
     height: 100%;
+    transition: displey 0.3s ease;
 }
 
 .nav-settings {
+    position: relative;
     width: 20%;
     height: 100%;
-    background: var(--background);
+    left: 2vw;
+    /*background: var(--background);*/
     display: flex;
     align-items: center;
     flex-direction: column;
@@ -17,6 +20,7 @@
 .nav-settings p {
     font-size: 60%;
     margin-top: 80px;
+    margin-bottom: 80px;
 }
 
 .nav-box {
@@ -110,6 +114,7 @@
  * account tab                                                                 *
  *                                                                             *
  ******************************************************************************/
+
 .accounts-list {
     max-height: 90%;
     display: flex;
@@ -312,6 +317,7 @@
  * resolution tab                                                              *
  *                                                                             *
  ******************************************************************************/
+ 
 .input-size-element {
     display: flex;
     align-items: center;

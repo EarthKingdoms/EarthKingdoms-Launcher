@@ -16,6 +16,7 @@ class Home {
         this.socialLick()
         this.instancesSelect()
         document.querySelector('.settings-btn').addEventListener('click', e => changePanel('settings'))
+        document.querySelector('.player-options').addEventListener('click', e => changePanel('settings'))
     }
 
     async news() {
@@ -29,7 +30,7 @@ class Home {
                     <div class="news-header">
                         <img class="server-status-icon" src="assets/images/icon.png">
                         <div class="header-text">
-                            <div class="title">Aucun news n'ai actuellement disponible.</div>
+                            <div class="title">Aucunes news n'est actuellement disponibles.</div>
                         </div>
                         <div class="date">
                             <div class="day">1</div>
@@ -38,7 +39,7 @@ class Home {
                     </div>
                     <div class="news-content">
                         <div class="bbWrapper">
-                            <p>Vous pourrez suivre ici toutes les news relative au serveur.</p>
+                            <p>Vous pourrez suivre ici toutes les news relatives au serveur.</p>
                         </div>
                     </div>`
                 newsElement.appendChild(blockNews);
@@ -74,7 +75,7 @@ class Home {
                 <div class="news-header">
                         <img class="server-status-icon" src="assets/images/icon.png">
                         <div class="header-text">
-                            <div class="title">Error.</div>
+                            <div class="title">Erreur.</div>
                         </div>
                         <div class="date">
                             <div class="day">1</div>
@@ -306,7 +307,7 @@ class Home {
             playInstanceBTN.style.display = "flex"
             infoStarting.innerHTML = `Vérification`
             new logger(pkg.name, '#7289da');
-            console.log('Close');
+            console.log('Fermer');
         });
 
         launch.on('error', err => {
@@ -336,7 +337,7 @@ class Home {
         let year = date.getFullYear()
         let month = date.getMonth() + 1
         let day = date.getDate()
-        let allMonth = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre']
+        let allMonth = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre']
         return { year: year, month: allMonth[month - 1], day: day }
     }
 }

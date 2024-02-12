@@ -5,13 +5,41 @@
     align-items: center;
 }
 
+/*body {
+    animation: fadeInAnimation ease 1.5s;
+    animation-iteration-count: 1;
+    animation-fill-mode: forwards;
+}
+
+@keyframes fadeInAnimation {
+    0% {
+        opacity: 0;
+    }
+    100% {
+        opacity: 1;
+    }
+}*/
+
+body {
+    animation: transitionIn ease 3s;
+}
+
+@keyframes transitionIn {
+    0% {
+        opacity: 0;
+    }
+    100% {
+        opacity: 1;
+    }
+}
+
 /*******************************************************************************
  *                                                                             *
  * Status server                                                               *
  *                                                                             *
  ******************************************************************************/
 
-.status-server {
+ .status-server {
     position: relative;
     display: flex;
     justify-content: space-between;
@@ -27,7 +55,7 @@
 }
 
 .server-status-icon {
-    height: 3.3rem;
+    height: 4rem;
 }
 
 .server-status-name {
@@ -36,8 +64,9 @@
 }
 
 .server-status-text {
-    font-size: 0.6rem;
+    font-size: 0.7rem;
     color: #1AC707;
+    cursor: pointer;
 }
 
 .server-status-infos .red {
@@ -81,7 +110,7 @@
 
 /*******************************************************************************
  *                                                                             *
- * news server                                                                 *
+ * News Server                                                                 *
  *                                                                             *
  ******************************************************************************/
 
@@ -94,9 +123,9 @@
 }
 
 .titre-tab-new {
-    margin-top: 1rem;
-    font-size: 2rem;
-    padding: 0.5rem 1rem;
+    margin-top: 1.5rem;
+    font-size: 23px;
+    padding: 0.8rem 1.5rem;
     border-radius: 2rem;
     background: var(--background-transparent);
     color: var(--color);
@@ -161,37 +190,45 @@
 
 /*******************************************************************************
  *                                                                             *
- * social server                                                               *
+ * Social Server                                                               *
  *                                                                             *
  ******************************************************************************/
 
-.social-tab {
+ .social-tab {
     position: absolute;
     display: flex;
     bottom: 0;
     right: 0;
-    width: 15%;
+    width: 20%;
     height: calc(80% - 1rem);
     justify-content: center;
     margin-bottom: 1rem;
 }
 
-.social-list {
-    border-radius: 10px;
-    height: 100%;
-}
-
 .social-block {
+    position: relative;
     display: flex;
     background: var(--background-transparent);
-    width: 90px;
-    height: 90px;
-    margin-bottom: 1rem;
+    width: 80px;
+    height: 80px;
+    margin-bottom: 1.4rem;
     border-radius: 10px;
     font-size: 2rem;
     cursor: pointer;
     align-items: center;
     justify-content: center;
+    transition: transform 0.3s ease;
+    transform-origin: center center; 
+}
+
+.social-block:hover {
+    transform: scale(1.2);
+}
+
+.social-list {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
 }
 
 .social-block .icon-social {
@@ -204,7 +241,7 @@
 
 /*******************************************************************************
  *                                                                             *
- * sidebar                                                                     *
+ * Sidebar                                                                     *
  *                                                                             *
  ******************************************************************************/
 
@@ -224,6 +261,13 @@
     border-radius: 15px;
     height: 3rem;
     margin: 0 1.5rem;
+    cursor: pointer;
+    transition: transform 0.3s ease;
+    transform-origin: center center; 
+}
+
+.player-options:hover {
+    transform: scale(1.1);
 }
 
 .player-head {
@@ -254,10 +298,12 @@
     justify-content: space-between;
     align-items: center;
     position: relative;
-    border: solid 3px var(--element-color);
-    border-radius: 15px;
+    background: linear-gradient(90deg, var(--element-color), var(--element-color-darker));
+    border-radius: 16px;
     height: 3.2rem;
     padding-right: 1.9rem;
+    transition: transform 0.3s ease;
+    transform-origin: center center; 
 }
 
 .play-btn {
@@ -268,7 +314,99 @@
     font-size: 2rem;
     font-weight: bolder;
     padding: 0 1.5rem;
-    pointer-events: none;
+    cursor: pointer;
+    overflow: hidden;
+    transition: transform 0.3s ease;
+    transform-origin: center center; 
+}
+
+.play-btn:hover,
+.play-instance:hover {
+    transform: scale(1.05);
+}
+
+.play-btn span {
+    display: inline-block;
+    transition: transform 0.3s ease-out;
+}
+
+.play-btn:hover span {
+    animation: rotateLetterUp 0.3s forwards ease-out;
+}
+
+@keyframes rotateLetterUp {
+    0% {
+        transform: translateY(0);
+    }
+    25% {
+        transform: translateY(-100%);
+    }
+    75% {
+        transform: translateY(-100%);
+    }
+    100% {
+        transform: translateY(0);
+    }
+}
+
+.play-btn:not(:hover) span {
+    animation: rotateLetterDown 0.3s reverse forwards ease-out;
+}
+
+@keyframes rotateLetterDown {
+    0% {
+        transform: translateY(0);
+    }
+    25% {
+        transform: translateY(-100%);
+    }
+    75% {
+        transform: translateY(-100%);
+    }
+    100% {
+        transform: translateY(0);
+    }
+}
+
+
+.play-btn:hover span:nth-child(1) {
+    animation-delay: 0.05s;
+}
+
+.play-btn:hover span:nth-child(2) {
+    animation-delay: 0.1s;
+}
+
+.play-btn:hover span:nth-child(3) {
+    animation-delay: 0.15s;
+}
+
+.play-btn:hover span:nth-child(4) {
+    animation-delay: 0.2s;
+}
+
+.play-btn:hover span:nth-child(5) {
+    animation-delay: 0.25s;
+}
+
+.play-btn span:nth-child(1) {
+    animation-delay: 0.25s;
+}
+
+.play-btn span:nth-child(2) {
+    animation-delay: 0.2s;
+}
+
+.play-btn span:nth-child(3) {
+    animation-delay: 0.15s;
+}
+
+.play-btn span:nth-child(4) {
+    animation-delay: 0.1s;
+}
+
+.play-btn span:nth-child(5) {
+    animation-delay: 0.05s;
 }
 
 .instance-select {
@@ -320,6 +458,15 @@
     font-size: 3rem;
     color: var(--element-color);
     margin: 0 1.5rem;
+    cursor: pointer;
+}
+
+.icon-settings {
+    transition: transform 0.5s ease-in;
+}
+
+.icon-settings:hover {
+    transform: rotate(180deg);
 }
 
 .instance-popup {
