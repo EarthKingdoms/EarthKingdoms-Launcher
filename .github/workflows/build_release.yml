@@ -1,5 +1,5 @@
 # module du helios launcher
-name: Launcher Build
+name: Launcher Builds
 on:
   push:
     branches: [ master ]
