@@ -15,10 +15,10 @@ jobs:
 
       - name: Check if tag exists
         id: check_tag
-        run: git rev-parse --verify --quiet ${{ env.version }}
+        run: git tag --list ${{ env.version }}
 
       - name: Create Release
-        if: steps.check_tag.outputs.return != '0'
+        if: steps.check_tag.outputs.stdout == ''
         id: create_release
         uses: actions/create-release@v1
         env:
