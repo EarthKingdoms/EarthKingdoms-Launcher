@@ -15,10 +15,18 @@ const { AZauth, Microsoft, Mojang } = require('minecraft-java-core');
 const { ipcRenderer } = require('electron');
 const fs = require('fs');
 
+// get version form package.json for logs
+const packageJson = JSON.parse(fs.readFileSync('package.json', 'utf8'));
+const version = packageJson.version;
+
 class Launcher {
     async init() {
         this.initLog();
         console.log('Initializing Launcher...');
+        console.log('------------------------------------------------------------')
+        console.log('Launcher Version : ' + version);
+        console.log('Last Update : 20/02/2024')
+        console.log('------------------------------------------------------------')
         this.shortcut()
         await setBackground()
         if (process.platform == 'win32') this.initFrame();

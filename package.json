@@ -1,11 +1,11 @@
 {
     "name": "EarthKingdoms-Launcher",
     "preductname": "EarthKingdoms Launcher",
-    "version": "2.0.0-beta2",
+    "version": "2.0.0-beta3",
     "description": "Lancer le EarthKingdoms Launcher",
     "main": "src/app.js",
     "author": {
-        "name": "Luuxis (base), EarthKingdoms, Inc.",
+        "name": "EarthKingdoms Inc. | Luuxis | OrgeAlexj06",
         "email": "contact@luuxis.fr",
         "url": "https://github.com/luuxis"
     },

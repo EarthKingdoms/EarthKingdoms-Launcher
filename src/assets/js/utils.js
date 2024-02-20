@@ -19,7 +19,7 @@ async function setBackground(theme) {
     if (typeof theme == 'undefined') {
         let databaseLauncher = new database();
         let configClient = await databaseLauncher.readData('configClient');
-        theme = configClient?.launcher_config?.theme || "auto"
+        theme = configClient?.launcher_config?.theme || "dark"
         theme = await ipcRenderer.invoke('is-dark-theme', theme).then(res => res)
     }
     let background
@@ -29,10 +29,10 @@ async function setBackground(theme) {
         let backgrounds = fs.readdirSync(`${__dirname}/assets/images/background/easterEgg`);
         let Background = backgrounds[Math.floor(Math.random() * backgrounds.length)];
         background = `url(./assets/images/background/easterEgg/${Background})`;
-    } else if (fs.existsSync(`${__dirname}/assets/images/background/${theme ? 'dark' : 'light'}`)) {
-        let backgrounds = fs.readdirSync(`${__dirname}/assets/images/background/${theme ? 'dark' : 'light'}`);
+    } else if(fs.existsSync(`${__dirname}/assets/images/background/light`)) {
+        let backgrounds = fs.readdirSync(`${__dirname}/assets/images/background/light`);
         let Background = backgrounds[Math.floor(Math.random() * backgrounds.length)];
-        background = `linear-gradient(#00000080, #00000080), url(./assets/images/background/${theme ? 'dark' : 'light'}/${Background})`;
+        background = `linear-gradient(#00000080, #00000080), url(./assets/images/background/light/${Background})`;
     }
     body.style.backgroundImage = background ? background : theme ? '#000' : '#fff';
     body.style.backgroundSize = 'cover';
@@ -86,7 +86,7 @@ async function setStatus(opt) {
     let nameServerElement = document.querySelector('.server-status-name');
     let statusServerElement = document.querySelector('.server-status-text');
     let playersOnline = document.querySelector('.status-player-count .player-count');
-    console.log('Initializing server status... (refresh every 10sec)')
+    console.log('Initializing server status... (refresh every 15sec)')
 
     async function updateStatus() {
         if (!opt) {
@@ -118,16 +118,7 @@ async function setStatus(opt) {
 
     setInterval(() => {
         updateStatus();
-    }, 10000);
-
-    // Ajoutez un écouteur d'événements de clic à cet élément
-statusServerElement.addEventListener('click', function() {
-    // Définissez l'URL vers laquelle vous souhaitez rediriger
-    let redirectUrl = 'https://status.earthkingdoms-minecraft-faction.fr';
-
-    // Ouvrez l'URL dans le navigateur par défaut de l'utilisateur
-    window.open(redirectUrl, '_blank');
-});
+    }, 15000);
 }
 
 export {

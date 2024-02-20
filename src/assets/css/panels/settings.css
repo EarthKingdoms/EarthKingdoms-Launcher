@@ -1,7 +1,7 @@
 .settings .container {
     display: flex;
     height: 100%;
-    transition: displey 0.3s ease;
+    transition: display 0.3s ease;
 }
 
 .nav-settings {
@@ -402,6 +402,10 @@
 
 .active-theme {
     border: 4px solid var(--element-color);
+}
+
+.theme-btn, .theme-btn-clair, .theme-btn-sombre, .theme-btn-auto, .active-theme, .theme {
+    display: none;
 }
 
 .close-btn {

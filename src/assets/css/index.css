@@ -57,13 +57,13 @@ img {
     width: 400px;
     text-align: center;
     transition: opacity 1.5s;
-    font: normal normal normal 9px/13px Poppins;
+    font: normal normal normal 11px/15px Poppins;
     color: var(--color);
     opacity: 0;
 }
 
 .splash-author .author {
-    font: normal normal bold 9px/13px Poppins;
+    font: normal normal bold 11px/15px Poppins;
 }
 
 .splash-author.opacity {
