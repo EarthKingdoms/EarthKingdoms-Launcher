@@ -29,7 +29,7 @@ async function setBackground(theme) {
         let backgrounds = fs.readdirSync(`${__dirname}/assets/images/background/easterEgg`);
         let Background = backgrounds[Math.floor(Math.random() * backgrounds.length)];
         background = `url(./assets/images/background/easterEgg/${Background})`;
-    } else if(fs.existsSync(`${__dirname}/assets/images/background/light`)) {
+    } else if (fs.existsSync(`${__dirname}/assets/images/background/light`)) {
         let backgrounds = fs.readdirSync(`${__dirname}/assets/images/background/light`);
         let Background = backgrounds[Math.floor(Math.random() * backgrounds.length)];
         background = `linear-gradient(#00000080, #00000080), url(./assets/images/background/light/${Background})`;
