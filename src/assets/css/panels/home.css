@@ -293,119 +293,78 @@
 }
 
 .play-instance {
-    display: flex;
-    justify-content: space-between;
+    background-color: #008542;
+    display: inline-flex;
     align-items: center;
+    justify-content: center;
     position: relative;
-    background: linear-gradient(90deg, var(--element-color), var(--element-color-darker));
-    border-radius: 16px;
-    height: 3.2rem;
-    padding-right: 1.9rem;
-    transition: transform 0.3s ease;
-    transform-origin: center center; 
+    border: 0;
+    z-index: 1;
+    user-select: none;
+    cursor: pointer;
+    transition: all 0.7s cubic-bezier(0, 0.8, 0.26, 0.99);
 }
 
 .play-btn {
-    border: none;
-    border-radius: 10px;
+    border: 0;
+    font-family: 'Kongtext';
+    font-size: 18px;
     background: none;
-    color: var(--color);
-    font-size: 2rem;
-    font-weight: bolder;
-    padding: 0 1.5rem;
-    cursor: pointer;
-    overflow: hidden;
-    transition: transform 0.3s ease;
-    transform-origin: center center; 
+    color: #fff;
+    text-shadow: 0 2px 0 rgb(0 0 0 / 25%);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    white-space: unset;
+    padding: 1.1rem 3rem;
+    text-decoration: none;
+    font-weight: 900;
 }
 
-.play-btn:hover,
-.play-instance:hover {
-    transform: scale(1.05);
+.play-instance:before {
+    position: absolute;
+    pointer-events: none;
+    top: 0;
+    left: 0;
+    display: block;
+    width: 100%;
+    height: 100%;
+    content: "";
+    transition: 0.7s cubic-bezier(0, 0.8, 0.26, 0.99);
+    z-index: -1;
+    background-color: #008542 !important;
+    box-shadow: 0 -4px rgb(21 108 0 / 50%) inset,
+        0 4px rgb(100 253 31 / 99%) inset, -4px 0 rgb(100 253 31 / 50%) inset,
+        4px 0 rgb(21 108 0 / 50%) inset;
 }
 
-.play-btn span {
-    display: inline-block;
-    transition: transform 0.3s ease-out;
+.play-instance:after {
+    position: absolute;
+    pointer-events: none;
+    top: 0;
+    left: 0;
+    display: block;
+    width: 100%;
+    height: 100%;
+    content: "";
+    box-shadow: 0 4px 0 0 rgb(0 0 0 / 15%);
+    transition: 0.7s cubic-bezier(0, 0.8, 0.26, 0.99);
 }
-
-.play-btn:hover span {
-    animation: rotateLetterUp 0.3s forwards ease-out;
+  
+.play-instance:hover:before {
+    box-shadow: 0 -4px rgb(0 0 0 / 50%) inset, 0 4px rgb(255 255 255 / 20%) inset,
+        -4px 0 rgb(255 255 255 / 20%) inset, 4px 0 rgb(0 0 0 / 50%) inset;
 }
-
-@keyframes rotateLetterUp {
-    0% {
-        transform: translateY(0);
-    }
-    25% {
-        transform: translateY(-100%);
-    }
-    75% {
-        transform: translateY(-100%);
-    }
-    100% {
-        transform: translateY(0);
-    }
+  
+.play-instance:hover:after {
+    box-shadow: 0 4px 0 0 rgb(0 0 0 / 15%);
 }
-
-.play-btn:not(:hover) span {
-    animation: rotateLetterDown 0.3s reverse forwards ease-out;
+  
+.play-instance:active {
+    transform: translateY(4px);
 }
-
-@keyframes rotateLetterDown {
-    0% {
-        transform: translateY(0);
-    }
-    25% {
-        transform: translateY(-100%);
-    }
-    75% {
-        transform: translateY(-100%);
-    }
-    100% {
-        transform: translateY(0);
-    }
-}
-
-
-.play-btn:hover span:nth-child(1) {
-    animation-delay: 0.05s;
-}
-
-.play-btn:hover span:nth-child(2) {
-    animation-delay: 0.1s;
-}
-
-.play-btn:hover span:nth-child(3) {
-    animation-delay: 0.15s;
-}
-
-.play-btn:hover span:nth-child(4) {
-    animation-delay: 0.2s;
-}
-
-.play-btn:hover span:nth-child(5) {
-    animation-delay: 0.25s;
-}
-
-.play-btn span:nth-child(1) {
-    animation-delay: 0.25s;
-}
-
-.play-btn span:nth-child(2) {
-    animation-delay: 0.2s;
-}
-
-.play-btn span:nth-child(3) {
-    animation-delay: 0.15s;
-}
-
-.play-btn span:nth-child(4) {
-    animation-delay: 0.1s;
-}
-
-.play-btn span:nth-child(5) {
-    animation-delay: 0.05s;
+  
+.play-instance:active:after {
+    box-shadow: 0 0px 0 0 rgb(0 0 0 / 15%);
 }
 
 .instance-select {
@@ -455,7 +414,7 @@
     width: 3rem;
     height: 3rem;
     font-size: 3rem;
-    color: var(--element-color);
+    color: #008542;
     margin: 0 1.5rem;
     cursor: pointer;
 }
