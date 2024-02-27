@@ -1,7 +1,7 @@
 {
     "name": "EarthKingdoms-Launcher",
     "preductname": "EarthKingdoms Launcher",
-    "version": "2.0.0-beta4",
+    "version": "2.0.0-beta5",
     "description": "Lancer le EarthKingdoms Launcher",
     "main": "src/app.js",
     "author": {
@@ -9,7 +9,7 @@
         "email": "contact@luuxis.fr",
         "url": "https://github.com/luuxis"
     },
-    "url": "https://files.earthkingdoms-minecraft-faction.fr/launcher/files",
+    "url": "https://files.earthkingdoms-minecraft-faction.fr/launcher",
     "scripts": {
         "start": "cross-env-shell NODE_ENV=dev electron .",
         "dev": "cross-env-shell DEV_TOOL=open nodemon --exec npm start",
