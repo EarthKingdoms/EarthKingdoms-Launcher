@@ -1,7 +1,7 @@
 {
     "name": "EarthKingdoms-Launcher",
     "preductname": "EarthKingdoms Launcher",
-    "version": "2.0.0-beta5",
+    "version": "2.0.0",
     "description": "Lancer le EarthKingdoms Launcher",
     "main": "src/app.js",
     "author": {
