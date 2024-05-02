@@ -2,11 +2,12 @@
  * @author Luuxis
  * @license CC-BY-NC 4.0 - https://creativecommons.org/licenses/by-nc/4.0
  */
-const { ipcRenderer } = require('electron');
+
+const { ipcRenderer, shell } = require('electron');
+const pkg = require('../package.json');
 const os = require('os');
 import { config, database } from './utils.js';
-
-let dev = process.env.NODE_ENV === 'dev';
+const nodeFetch = require("node-fetch");
 
 
 class Splash {
@@ -31,7 +32,7 @@ class Splash {
         let splashes = [
             { "message": "Je... vie...", "author": "OrgeAlexj06" },
             { "message": "Salut, je suis du code.", "author": "OrgeAlexj06" },
-            { "message": "Linux n'est pas un os, mais un kernel.", "author": "OrgeAlexj06" }
+            { "message": "Bienvenue sur EarthKingdoms !", "author": "OrgeAlexj06" }
         ];
         let splash = splashes[Math.floor(Math.random() * splashes.length)];
         this.splashMessage.textContent = splash.message;
@@ -50,7 +51,7 @@ class Splash {
     }
 
     async checkUpdate() {
-        if (dev) return this.startLauncher();
+        
         this.setStatus(`Recherche de mise à jour...`);
 
         ipcRenderer.invoke('update-app').then().catch(err => {
@@ -59,7 +60,8 @@ class Splash {
 
         ipcRenderer.on('updateAvailable', () => {
             this.setStatus(`Mise à jour disponible !`);
-            ipcRenderer.send('start-update');
+            if (os.platform() == 'win32') ipcRenderer.send('start-update');
+            else return this.dowloadUpdate();
         })
 
         ipcRenderer.on('error', (event, err) => {
@@ -76,6 +78,37 @@ class Splash {
             console.error("Aucune Mise à jour disponible");
             this.maintenanceCheck();
         })
+    }
+
+    getLatestReleaseForOS(os, preferredFormat, asset) {
+        return asset.filter(asset => {
+            const name = asset.name.toLowerCase();
+            const isOSMatch = name.includes(os);
+            const isFormatMatch = name.endsWith(preferredFormat);
+            return isOSMatch && isFormatMatch;
+        }).sort((a, b) => new Date(b.created_at) - new Date(a.created_at))[0];
+    }
+
+    async dowloadUpdate() {
+        const repoURL = pkg.repository.url.replace("git+", "").replace(".git", "").replace("https://github.com/", "").split("/");
+        const githubAPI = await nodeFetch('https://api.github.com').then(res => res.json()).catch(err => err);
+
+        const githubAPIRepoURL = githubAPI.repository_url.replace("{owner}", repoURL[0]).replace("{repo}", repoURL[1]);
+        const githubAPIRepo = await nodeFetch(githubAPIRepoURL).then(res => res.json()).catch(err => err);
+
+        const releases_url = await nodeFetch(githubAPIRepo.releases_url.replace("{/id}", '')).then(res => res.json()).catch(err => err);
+        const latestRelease = releases_url[0].assets;
+        let latest;
+
+        if (os.platform() == 'darwin') latest = this.getLatestReleaseForOS('mac', '.dmg', latestRelease);
+        else if (os == 'linux') latest = this.getLatestReleaseForOS('linux', '.appimage', latestRelease);
+
+
+        this.setStatus(`Mise à jour disponible !<br><div class="download-update">Télécharger</div>`);
+        document.querySelector(".download-update").addEventListener("click", () => {
+            shell.openExternal(latest.browser_download_url);
+            return this.shutdown("Téléchargement en cours...");
+        });
     }
 
     async maintenanceCheck() {
