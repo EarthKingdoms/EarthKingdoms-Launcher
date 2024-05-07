@@ -2,7 +2,7 @@
     "name": "EarthKingdoms-Launcher",
     "preductname": "EarthKingdoms Launcher",
     "_comment1": "!!!! CHANGER VERSION DANS /SRC/INDEX.HTML !!!!",
-    "version": "2.0.2",
+    "version": "2.0.3",
     "_comment2": "!!!! CHANGER VERSION DANS /SRC/INDEX.HTML !!!!",
     "description": "Lancer le EarthKingdoms Launcher",
     "main": "src/app.js",
