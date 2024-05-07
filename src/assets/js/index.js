@@ -60,7 +60,10 @@ class Splash {
 
         ipcRenderer.on('updateAvailable', () => {
             this.setStatus(`Mise à jour disponible !`);
-            if (os.platform() == 'win32') ipcRenderer.send('start-update');
+            if (os.platform() == 'win32') {
+                this.toggleProgress();
+                ipcRenderer.send('start-update');
+            }
             else return this.dowloadUpdate();
         })
 
