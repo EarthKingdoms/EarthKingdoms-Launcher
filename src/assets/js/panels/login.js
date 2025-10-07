@@ -6,7 +6,7 @@
 const { AZauth, Mojang } = require('minecraft-java-core');
 const { ipcRenderer } = require('electron');
 
-import { popup, database, changePanel, accountSelect, addAccount, config, setStatus } from '../utils.js';
+import { popup, database, changePanel, accountSelect, addAccount, config, setStatus, generateDeterministicUUID } from '../utils.js';
 
 class Login {
     static id = "login";
@@ -15,16 +15,29 @@ class Login {
         this.config = config;
         this.db = new database();
 
+        // Vérifier si on vient des paramètres (bouton annuler visible)
+        let cancelBtn = document.querySelector('.cancel-home');
+        let isFromSettings = cancelBtn && cancelBtn.style.display !== 'none';
+
         if(typeof this.config.online == 'boolean') {
-            this.config.online ? await this.getMicrosoft() : await this.getCrack()
+            if(this.config.online) {
+                await this.getMicrosoft(); // Mode Microsoft avec option crack
+            } else {
+                // Si on vient des paramètres et que la config est crack uniquement, on force le choix
+                if(isFromSettings) {
+                    await this.getMicrosoft(); // On force le mode Microsoft avec choix
+                } else {
+                    await this.getCrack(); // Mode crack uniquement
+                }
+            }
         } else if(typeof this.config.online == 'string') {
             if(this.config.online.match(/^(http|https):\/\/[^ "]+$/)) {
                 await this.getAZauth();
             }
         }
         
-        document.querySelector('.cancel-home').addEventListener('click', () => {
-            document.querySelector('.cancel-home').style.display = 'none'
+        cancelBtn.addEventListener('click', () => {
+            cancelBtn.style.display = 'none'
             changePanel('settings')
         })
     }
@@ -34,6 +47,7 @@ class Login {
         let popupLogin = new popup();
         let loginHome = document.querySelector('.login-home');
         let microsoftBtn = document.querySelector('.connect-home');
+        let crackBtn = document.querySelector('.connect-crack');
         loginHome.style.display = 'block';
 
         microsoftBtn.addEventListener("click", () => {
@@ -59,15 +73,89 @@ class Login {
                 });
             });
         })
+
+        crackBtn.addEventListener("click", () => {
+            // Basculer vers le mode crack
+            loginHome.style.display = 'none';
+            let loginOffline = document.querySelector('.login-offline');
+            loginOffline.style.display = 'block';
+            
+            // Initialiser la logique de connexion crack
+            this.initCrackLogin();
+        })
+    }
+
+    initCrackLogin() {
+        let popupLogin = new popup();
+        let emailOffline = document.querySelector('.email-offline');
+        let connectOffline = document.querySelector('.connect-crack-mode'); // Classe spécifique pour le mode crack
+        let cancelOffline = document.querySelector('.cancel-crack-mode'); // Classe spécifique pour le mode crack
+
+        // Afficher le bouton annuler pour revenir à Microsoft
+        cancelOffline.style.display = 'inline-block';
+
+        // Gérer le retour vers Microsoft
+        cancelOffline.addEventListener('click', () => {
+            document.querySelector('.login-offline').style.display = 'none';
+            document.querySelector('.login-home').style.display = 'block';
+        });
+
+        connectOffline.addEventListener('click', async () => {
+            if(emailOffline.value.length < 3) {
+                popupLogin.openPopup({
+                    title: 'Erreur',
+                    content: 'Votre pseudo doit faire au moins 3 caractères !',
+                    options: true
+                });
+                return;
+            }
+
+            if(emailOffline.value.match(/ /g)) {
+                popupLogin.openPopup({
+                    title: 'Erreur',
+                    content: 'Votre pseudo ne doit pas contenir d\'espaces !',
+                    options: true
+                });
+                return;
+            }
+
+            popupLogin.openPopup({
+                title: 'Connexion en cours',
+                content: 'Veuillez patienter...',
+                color: 'var(--dark)'
+            });
+
+            // Générer un UUID déterministe pour ce pseudo
+            let deterministicUUID = generateDeterministicUUID(emailOffline.value);
+            
+            // Créer un objet de connexion avec l'UUID déterministe
+            let MojangConnect = {
+                name: emailOffline.value,
+                uuid: deterministicUUID,
+                access_token: 'offline',
+                meta: {
+                    type: 'Mojang',
+                    online: false
+                }
+            };
+
+            await this.saveData(MojangConnect)
+            popupLogin.closePopup();
+        });
     }
 
     async getCrack() {
         console.log('Initializing offline login...');
         let popupLogin = new popup();
         let loginOffline = document.querySelector('.login-offline');
+        let loginHome = document.querySelector('.login-home');
+        
+        // Masquer le bouton crack car on est déjà en mode crack uniquement
+        let crackBtn = document.querySelector('.connect-crack');
+        if(crackBtn) crackBtn.style.display = 'none';
 
         let emailOffline = document.querySelector('.email-offline');
-        let connectOffline = document.querySelector('.connect-offline');
+        let connectOffline = document.querySelector('.connect-crack-mode'); // Classe spécifique pour le mode crack
         loginOffline.style.display = 'block';
 
         connectOffline.addEventListener('click', async () => {
@@ -89,16 +177,20 @@ class Login {
                 return;
             }
 
-            let MojangConnect = await Mojang.login(emailOffline.value);
+            // Générer un UUID déterministe pour ce pseudo
+            let deterministicUUID = generateDeterministicUUID(emailOffline.value);
+            
+            // Créer un objet de connexion avec l'UUID déterministe
+            let MojangConnect = {
+                name: emailOffline.value,
+                uuid: deterministicUUID,
+                access_token: 'offline',
+                meta: {
+                    type: 'Mojang',
+                    online: false
+                }
+            };
 
-            if(MojangConnect.error) {
-                popupLogin.openPopup({
-                    title: 'Erreur',
-                    content: MojangConnect.message,
-                    options: true
-                });
-                return;
-            }
             await this.saveData(MojangConnect)
             popupLogin.closePopup();
         });
@@ -193,6 +285,30 @@ class Login {
 
     async saveData(connectionData) {
         let configClient = await this.db.readData('configClient');
+        
+        // Vérifier s'il existe déjà un compte avec ce nom (pour éviter les doublons)
+        let existingAccounts = await this.db.readAllData('accounts');
+        let existingAccount = existingAccounts.find(acc => acc.name === connectionData.name);
+        
+        if(existingAccount) {
+            // Utiliser directement le compte existant (même UUID, même stuff)
+            let popupInfo = new popup();
+            popupInfo.openPopup({
+                title: 'Compte existant',
+                content: `Le compte "${connectionData.name}" existe déjà. Utilisation du compte existant pour préserver votre inventaire.`,
+                color: 'green',
+                background: false
+            });
+            
+            // Sélectionner le compte existant sans le recréer
+            configClient.account_selected = existingAccount.ID;
+            await this.db.updateData('configClient', configClient);
+            await addAccount(existingAccount);
+            await accountSelect(existingAccount);
+            await changePanel('home');
+            return;
+        }
+        
         let account = await this.db.createData('accounts', connectionData)
         let instanceSelect = configClient.instance_selct
         let instancesList = await config.getInstanceList()

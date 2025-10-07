@@ -64,6 +64,12 @@ async function appdata() {
 }
 
 async function addAccount(data) {
+    // Vérifier si le compte est déjà affiché dans la liste
+    let existingElement = document.getElementById(data.ID);
+    if(existingElement) {
+        return existingElement; // Le compte est déjà affiché
+    }
+    
     let skin = false
     if (data?.profile?.skins[0]?.base64) skin = await new skin2D().creatHeadTexture(data.profile.skins[0].base64);
     let div = document.createElement("div");
@@ -134,6 +140,33 @@ async function setStatus(opt) {
 }
 
 
+/**
+ * Génère un UUID déterministe basé sur le pseudo
+ * Utilise exactement la même méthode que Java UUID.nameUUIDFromBytes()
+ * Format: OfflinePlayer:<username>
+ */
+function generateDeterministicUUID(username) {
+    const crypto = require('crypto');
+    
+    // Utilise MD5 avec le préfixe "OfflinePlayer:" comme Java
+    const data = Buffer.from('OfflinePlayer:' + username, 'utf8');
+    const hash = crypto.createHash('md5').update(data).digest();
+    
+    // Format en UUID v3 (même format que Java UUID.nameUUIDFromBytes)
+    hash[6] = (hash[6] & 0x0f) | 0x30; // Version 3
+    hash[8] = (hash[8] & 0x3f) | 0x80; // Variant
+    
+    // Convertir en string UUID
+    const hex = hash.toString('hex');
+    return [
+        hex.substring(0, 8),
+        hex.substring(8, 12),
+        hex.substring(12, 16),
+        hex.substring(16, 20),
+        hex.substring(20, 32)
+    ].join('-');
+}
+
 export {
     appdata as appdata,
     changePanel as changePanel,
@@ -147,5 +180,6 @@ export {
     accountSelect as accountSelect,
     slider as Slider,
     pkg as pkg,
-    setStatus as setStatus
+    setStatus as setStatus,
+    generateDeterministicUUID as generateDeterministicUUID
 }

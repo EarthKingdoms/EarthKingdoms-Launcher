@@ -259,6 +259,7 @@ class Home {
 
             java: {
                 path: configClient.java_config.java_path,
+                autoDownload: true,
             },
 
             JVM_ARGS:  options.jvm_args ? options.jvm_args : [],

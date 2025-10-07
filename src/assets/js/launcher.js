@@ -196,8 +196,8 @@ class Launcher {
                         background: false
                     });
                     if(account.meta.online === false) {
-                        let refresh_accounts = await Mojang.login(account.name);
-
+                        // Pour les comptes crack, on garde l'UUID existant pour éviter de perdre le stuff
+                        let refresh_accounts = account; // On garde les données existantes
                         refresh_accounts.ID = account_ID
                         await addAccount(refresh_accounts)
                         await this.db.updateData('accounts', refresh_accounts, account_ID)

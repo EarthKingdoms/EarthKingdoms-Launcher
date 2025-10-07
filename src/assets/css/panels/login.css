@@ -21,6 +21,8 @@
     display: flex;
     justify-content: center;
     align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
 }
 
 .login-new-tab {
@@ -74,15 +76,18 @@
 .A2F {
     color: var(--color);
     background: none;
-    border: solid 2px var(--element-color);
-    border-radius: 30px;
+    border: solid 1px var(--dark);
+    border-radius: 7px;
     width: 50%;
     padding: 0.4rem 1rem;
     margin-top: 10px;
 }
 
 .connect-home,
-.cancel-home {
+.connect-crack,
+.connect-crack-mode,
+.cancel-home,
+.cancel-crack-mode {
     display: flex;
     align-items: center;
     justify-content: center;
@@ -97,7 +102,10 @@
 }
 
 .connect-home .icon,
-.cancel-home .icon {
+.connect-crack .icon,
+.connect-crack-mode .icon,
+.cancel-home .icon,
+.cancel-crack-mode .icon {
     width: 24px;
     height: 24px;
     margin-right: 8px;
@@ -105,7 +113,10 @@
 }
 
 .connect-home span,
-.cancel-home span {
+.connect-crack span,
+.connect-crack-mode span,
+.cancel-home span,
+.cancel-crack-mode span {
     display: inline-flex;
     align-items: center;
     margin: 0;
@@ -117,6 +128,26 @@
 }
 
 .connect-home:hover,
-.cancel-home:hover {
+.connect-crack:hover,
+.connect-crack-mode:hover,
+.cancel-home:hover,
+.cancel-crack-mode:hover {
     transform: scale(1.05);
+}
+
+/* Gestion des icônes selon le thème pour le bouton crack */
+.dark .icon-crack-light {
+    display: none !important;
+}
+
+.dark .icon-crack-dark {
+    display: inline-block !important;
+}
+
+.light .icon-crack-dark {
+    display: none !important;
+}
+
+.light .icon-crack-light {
+    display: inline-block !important;
 }
