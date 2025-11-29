@@ -1,12 +1,13 @@
 /**
  * @author Luuxis
  * @license CC-BY-NC 4.0 - https://creativecommons.org/licenses/by-nc/4.0
+ * Modifié pour EarthKingdoms - Authentification via API backend uniquement
  */
 
-const { AZauth, Mojang } = require('minecraft-java-core');
 const { ipcRenderer } = require('electron');
 
 import { popup, database, changePanel, accountSelect, addAccount, config, setStatus, generateDeterministicUUID } from '../utils.js';
+import authAPI from '../utils/auth-api.js';
 
 class Login {
     static id = "login";
@@ -17,271 +18,296 @@ class Login {
 
         // Vérifier si on vient des paramètres (bouton annuler visible)
         let cancelBtn = document.querySelector('.cancel-home');
-        let isFromSettings = cancelBtn && cancelBtn.style.display !== 'none';
-
-        if(typeof this.config.online == 'boolean') {
-            if(this.config.online) {
-                await this.getMicrosoft(); // Mode Microsoft avec option crack
-            } else {
-                // Si on vient des paramètres et que la config est crack uniquement, on force le choix
-                if(isFromSettings) {
-                    await this.getMicrosoft(); // On force le mode Microsoft avec choix
-                } else {
-                    await this.getCrack(); // Mode crack uniquement
-                }
-            }
-        } else if(typeof this.config.online == 'string') {
-            if(this.config.online.match(/^(http|https):\/\/[^ "]+$/)) {
-                await this.getAZauth();
-            }
+        
+        // FORCER l'utilisation de l'API backend uniquement
+        // Bloquer Microsoft, Mojang, Crack et AZauth
+        await this.getEarthKingdomsAuth();
+        
+        if(cancelBtn) {
+            cancelBtn.addEventListener('click', () => {
+                cancelBtn.style.display = 'none'
+                changePanel('settings')
+            })
         }
+    }
+
+    /**
+     * Authentification via l'API EarthKingdoms (remplace Microsoft/Mojang/Crack)
+     */
+    async getEarthKingdomsAuth() {
+        console.log('Initializing EarthKingdoms API authentication...');
+        let popupLogin = new popup();
         
-        cancelBtn.addEventListener('click', () => {
-            cancelBtn.style.display = 'none'
-            changePanel('settings')
-        })
-    }
-
-    async getMicrosoft() {
-        console.log('Initializing Microsoft login...');
-        let popupLogin = new popup();
+        // Utiliser l'interface AZauth existante mais pour notre API
+        let loginAPI = document.querySelector('.login-AZauth');
         let loginHome = document.querySelector('.login-home');
-        let microsoftBtn = document.querySelector('.connect-home');
-        let crackBtn = document.querySelector('.connect-crack');
-        loginHome.style.display = 'block';
-
-        microsoftBtn.addEventListener("click", () => {
-            popupLogin.openPopup({
-                title: 'Connexion en cours',
-                content: 'Veuillez patienter...',
-                color: 'var(--dark)'
-            });
-
-            ipcRenderer.invoke('Microsoft-window', this.config.client_id).then(async account_connect => {
-                if(account_connect === 'cancel' || !account_connect) {
-                    popupLogin.closePopup();
-                } else {
-                    await this.saveData(account_connect)
-                    popupLogin.closePopup();
-                }
-
-            }).catch(err => {
-                popupLogin.openPopup({
-                    title: 'Erreur',
-                    content: err,
-                    options: true
-                });
-            });
-        })
-
-        crackBtn.addEventListener("click", () => {
-            // Basculer vers le mode crack
-            loginHome.style.display = 'none';
-            let loginOffline = document.querySelector('.login-offline');
-            loginOffline.style.display = 'block';
-            
-            // Initialiser la logique de connexion crack
-            this.initCrackLogin();
-        })
-    }
-
-    initCrackLogin() {
-        let popupLogin = new popup();
-        let emailOffline = document.querySelector('.email-offline');
-        let connectOffline = document.querySelector('.connect-crack-mode'); // Classe spécifique pour le mode crack
-        let cancelOffline = document.querySelector('.cancel-crack-mode'); // Classe spécifique pour le mode crack
-
-        // Afficher le bouton annuler pour revenir à Microsoft
-        cancelOffline.style.display = 'inline-block';
-
-        // Gérer le retour vers Microsoft
-        cancelOffline.addEventListener('click', () => {
-            document.querySelector('.login-offline').style.display = 'none';
-            document.querySelector('.login-home').style.display = 'block';
-        });
-
-        connectOffline.addEventListener('click', async () => {
-            if(emailOffline.value.length < 3) {
-                popupLogin.openPopup({
-                    title: 'Erreur',
-                    content: 'Votre pseudo doit faire au moins 3 caractères !',
-                    options: true
-                });
-                return;
-            }
-
-            if(emailOffline.value.match(/ /g)) {
-                popupLogin.openPopup({
-                    title: 'Erreur',
-                    content: 'Votre pseudo ne doit pas contenir d\'espaces !',
-                    options: true
-                });
-                return;
-            }
-
-            popupLogin.openPopup({
-                title: 'Connexion en cours',
-                content: 'Veuillez patienter...',
-                color: 'var(--dark)'
-            });
-
-            // Générer un UUID déterministe pour ce pseudo
-            let deterministicUUID = generateDeterministicUUID(emailOffline.value);
-            
-            // Créer un objet de connexion avec l'UUID déterministe
-            let MojangConnect = {
-                name: emailOffline.value,
-                uuid: deterministicUUID,
-                access_token: 'offline',
-                meta: {
-                    type: 'Mojang',
-                    online: false
-                }
-            };
-
-            await this.saveData(MojangConnect)
-            popupLogin.closePopup();
-        });
-    }
-
-    async getCrack() {
-        console.log('Initializing offline login...');
-        let popupLogin = new popup();
         let loginOffline = document.querySelector('.login-offline');
-        let loginHome = document.querySelector('.login-home');
         
-        // Masquer le bouton crack car on est déjà en mode crack uniquement
-        let crackBtn = document.querySelector('.connect-crack');
-        if(crackBtn) crackBtn.style.display = 'none';
-
-        let emailOffline = document.querySelector('.email-offline');
-        let connectOffline = document.querySelector('.connect-crack-mode'); // Classe spécifique pour le mode crack
-        loginOffline.style.display = 'block';
-
-        connectOffline.addEventListener('click', async () => {
-            if(emailOffline.value.length < 3) {
-                popupLogin.openPopup({
-                    title: 'Erreur',
-                    content: 'Votre pseudo doit faire au moins 3 caractères !',
-                    options: true
-                });
-                return;
-            }
-
-            if(emailOffline.value.match(/ /g)) {
-                popupLogin.openPopup({
-                    title: 'Erreur',
-                    content: 'Votre pseudo ne doit pas contenir d\'espaces !',
-                    options: true
-                });
-                return;
-            }
-
-            // Générer un UUID déterministe pour ce pseudo
-            let deterministicUUID = generateDeterministicUUID(emailOffline.value);
+        // Masquer les autres interfaces
+        if(loginHome) loginHome.style.display = 'none';
+        if(loginOffline) loginOffline.style.display = 'none';
+        
+        // Afficher l'interface de connexion API
+        if(loginAPI) {
+            loginAPI.style.display = 'block';
             
-            // Créer un objet de connexion avec l'UUID déterministe
-            let MojangConnect = {
-                name: emailOffline.value,
-                uuid: deterministicUUID,
-                access_token: 'offline',
-                meta: {
-                    type: 'Mojang',
-                    online: false
-                }
-            };
+            // Modifier les placeholders pour notre système
+            let emailInput = document.querySelector('.email-AZauth');
+            let passwordInput = document.querySelector('.password-AZauth');
+            let connectBtn = document.querySelector('.connect-AZauth');
+            
+            if(emailInput) emailInput.placeholder = 'Pseudo ou Email';
+            if(passwordInput) passwordInput.placeholder = 'Mot de passe';
+            
+            if(connectBtn) {
+                connectBtn.addEventListener('click', async () => {
+                    if(!emailInput || !passwordInput) return;
+                    
+                    if(emailInput.value === '' || passwordInput.value === '') {
+                        popupLogin.openPopup({
+                            title: 'Erreur',
+                            content: 'Veuillez remplir tous les champs !',
+                            options: true
+                        });
+                        return;
+                    }
 
-            await this.saveData(MojangConnect)
-            popupLogin.closePopup();
-        });
-    }
-
-    async getAZauth() {
-        console.log('Initializing AZauth login...');
-        let AZauthClient = new AZauth(this.config.online);
-        let PopupLogin = new popup();
-        let loginAZauth = document.querySelector('.login-AZauth');
-        let loginAZauthA2F = document.querySelector('.login-AZauth-A2F');
-
-        let AZauthEmail = document.querySelector('.email-AZauth');
-        let AZauthPassword = document.querySelector('.password-AZauth');
-        let AZauthA2F = document.querySelector('.A2F-AZauth');
-        let connectAZauthA2F = document.querySelector('.connect-AZauth-A2F');
-        let AZauthConnectBTN = document.querySelector('.connect-AZauth');
-        let AZauthCancelA2F = document.querySelector('.cancel-AZauth-A2F');
-
-        loginAZauth.style.display = 'block';
-
-        AZauthConnectBTN.addEventListener('click', async () => {
-            PopupLogin.openPopup({
-                title: 'Connexion en cours',
-                content: 'Veuillez patienter...',
-                color: 'var(--dark)'
-            });
-
-            if(AZauthEmail.value === '' || AZauthPassword.value === '') {
-                PopupLogin.openPopup({
-                    title: 'Erreur',
-                    content: 'Veuillez remplir tous les champs !',
-                    options: true
-                });
-                return;
-            }
-
-            let AZauthConnect = await AZauthClient.login(AZauthEmail.value, AZauthPassword.value);
-
-            if(AZauthConnect.error) {
-                PopupLogin.openPopup({
-                    title: 'Erreur',
-                    content: AZauthConnect.message,
-                    options: true
-                });
-            } else if(AZauthConnect.A2F) {
-                loginAZauthA2F.style.display = 'block';
-                loginAZauth.style.display = 'none';
-                PopupLogin.closePopup();
-
-                AZauthCancelA2F.addEventListener('click', () => {
-                    loginAZauthA2F.style.display = 'none';
-                    loginAZauth.style.display = 'block';
-                });
-
-                connectAZauthA2F.addEventListener('click', async () => {
-                    PopupLogin.openPopup({
+                    popupLogin.openPopup({
                         title: 'Connexion en cours',
                         content: 'Veuillez patienter...',
                         color: 'var(--dark)'
                     });
 
-                    if(AZauthA2F.value === '') {
-                        PopupLogin.openPopup({
-                            title: 'Erreur',
-                            content: 'Veuillez entrer le code A2F !',
-                            options: true
-                        });
-                        return;
+                    // Appeler l'API backend (route launcher)
+                    const result = await authAPI.login(emailInput.value, passwordInput.value);
+
+                    if(result.error) {
+                        // Gérer spécifiquement le rate limiting
+                        if(result.rateLimited) {
+                            popupLogin.openPopup({
+                                title: 'Trop de tentatives',
+                                content: result.errorMessage || result.message || 'Trop de tentatives de connexion. Veuillez réessayer dans quelques minutes.',
+                                color: 'orange',
+                                options: true
+                            });
+                            // Désactiver le bouton temporairement
+                            if(connectBtn) {
+                                connectBtn.disabled = true;
+                                connectBtn.textContent = 'Trop de tentatives...';
+                                const waitTime = result.waitTime || 15;
+                                setTimeout(() => {
+                                    connectBtn.disabled = false;
+                                    connectBtn.textContent = 'Connexion';
+                                }, waitTime * 60 * 1000); // Attendre le temps spécifié
+                            }
+                        } else {
+                            popupLogin.openPopup({
+                                title: 'Erreur',
+                                content: result.errorMessage || result.message || 'Erreur de connexion',
+                                options: true
+                            });
+                        }
+                    } else {
+                        // Vérifier que le token existe dans la réponse
+                        if (!result.token || result.token.trim() === '') {
+                            console.error('[Login] ❌ Token manquant dans la réponse API');
+                            popupLogin.openPopup({
+                                title: 'Erreur',
+                                content: 'La réponse du serveur ne contient pas de token. Veuillez réessayer ou contacter le support.',
+                                color: 'red',
+                                options: true
+                            });
+                            return;
+                        }
+                        
+                        // Vérifier que expires existe
+                        if (!result.expires) {
+                            console.error('[Login] ❌ Date d\'expiration manquante dans la réponse API');
+                            popupLogin.openPopup({
+                                title: 'Erreur',
+                                content: 'La réponse du serveur ne contient pas de date d\'expiration. Veuillez réessayer ou contacter le support.',
+                                color: 'red',
+                                options: true
+                            });
+                            return;
+                        }
+                        
+                        // Vérifier que le token existe
+                        if (!result.token || result.token.trim() === '') {
+                            console.error('[Login] ❌ Token manquant dans la réponse');
+                            popupLogin.openPopup({
+                                title: 'Erreur',
+                                content: 'La réponse du serveur ne contient pas de token. Veuillez réessayer.',
+                                color: 'red',
+                                options: true
+                            });
+                            return;
+                        }
+                        
+                        // Convertir les données en format compatible
+                        const accountData = authAPI.convertToAccountFormat(result);
+                        
+                        // Vérifier que le token a bien été stocké
+                        if (!accountData.access_token || accountData.access_token.trim() === '') {
+                            console.error('[Login] ❌ Token non stocké');
+                            popupLogin.openPopup({
+                                title: 'Erreur',
+                                content: 'Erreur lors du stockage du token. Veuillez réessayer.',
+                                color: 'red',
+                                options: true
+                            });
+                            return;
+                        }
+                        
+                        console.log('[Login] ✅ Connexion réussie pour:', result.username);
+                        
+                        // Sauvegarder le token launcher (valable 12 heures)
+                        await this.saveData(accountData);
+                        popupLogin.closePopup();
                     }
-
-                    AZauthConnect = await AZauthClient.login(AZauthEmail.value, AZauthPassword.value, AZauthA2F.value);
-
-                    if(AZauthConnect.error) {
-                        PopupLogin.openPopup({
-                            title: 'Erreur',
-                            content: AZauthConnect.message,
-                            options: true
-                        });
-                        return;
-                    }
-
-                    await this.saveData(AZauthConnect)
-                    PopupLogin.closePopup();
                 });
-            } else if(!AZauthConnect.A2F) {
-                await this.saveData(AZauthConnect)
-                PopupLogin.closePopup();
             }
-        });
+        } else {
+            // Si l'interface n'existe pas, créer une interface simple
+            await this.createSimpleLoginInterface();
+        }
     }
+    
+    /**
+     * Créer une interface de connexion simple si nécessaire
+     */
+    async createSimpleLoginInterface() {
+        let popupLogin = new popup();
+        let loginContainer = document.querySelector('.login-home');
+        
+        if(loginContainer) {
+            loginContainer.innerHTML = `
+                <div class="login-text">Connexion EarthKingdoms</div>
+                <div class="input-login">
+                    <input type="text" class="email email-api" placeholder="Pseudo ou Email" />
+                    <input type="password" class="password password-api" placeholder="Mot de passe" />
+                </div>
+                <div class="login-options">
+                    <button class="connect connect-api">Connexion</button>
+                </div>
+            `;
+            loginContainer.style.display = 'block';
+            
+            let emailInput = document.querySelector('.email-api');
+            let passwordInput = document.querySelector('.password-api');
+            let connectBtn = document.querySelector('.connect-api');
+            
+            if(connectBtn) {
+                connectBtn.addEventListener('click', async () => {
+                    if(!emailInput || !passwordInput) return;
+                    
+                    if(emailInput.value === '' || passwordInput.value === '') {
+                        popupLogin.openPopup({
+                            title: 'Erreur',
+                            content: 'Veuillez remplir tous les champs !',
+                            options: true
+                        });
+                        return;
+                    }
+
+                    popupLogin.openPopup({
+                        title: 'Connexion en cours',
+                        content: 'Veuillez patienter...',
+                        color: 'var(--dark)'
+                    });
+
+                    const result = await authAPI.login(emailInput.value, passwordInput.value);
+
+                    if(result.error) {
+                        // Gérer spécifiquement le rate limiting
+                        if(result.rateLimited) {
+                            popupLogin.openPopup({
+                                title: 'Trop de tentatives',
+                                content: result.errorMessage || result.message || 'Trop de tentatives de connexion. Veuillez réessayer dans quelques minutes.',
+                                color: 'orange',
+                                options: true
+                            });
+                            // Désactiver le bouton temporairement
+                            if(connectBtn) {
+                                connectBtn.disabled = true;
+                                connectBtn.textContent = 'Trop de tentatives...';
+                                const waitTime = result.waitTime || 15;
+                                setTimeout(() => {
+                                    connectBtn.disabled = false;
+                                    connectBtn.textContent = 'Connexion';
+                                }, waitTime * 60 * 1000); // Attendre le temps spécifié
+                            }
+                        } else {
+                            popupLogin.openPopup({
+                                title: 'Erreur',
+                                content: result.errorMessage || result.message || 'Erreur de connexion',
+                                options: true
+                            });
+                        }
+                    } else {
+                        // Vérifier que le token existe dans la réponse
+                        if (!result.token || result.token.trim() === '') {
+                            console.error('[Login] ❌ Token manquant dans la réponse API');
+                            popupLogin.openPopup({
+                                title: 'Erreur',
+                                content: 'La réponse du serveur ne contient pas de token. Veuillez réessayer ou contacter le support.',
+                                color: 'red',
+                                options: true
+                            });
+                            return;
+                        }
+                        
+                        // Vérifier que expires existe
+                        if (!result.expires) {
+                            console.error('[Login] ❌ Date d\'expiration manquante dans la réponse API');
+                            popupLogin.openPopup({
+                                title: 'Erreur',
+                                content: 'La réponse du serveur ne contient pas de date d\'expiration. Veuillez réessayer ou contacter le support.',
+                                color: 'red',
+                                options: true
+                            });
+                            return;
+                        }
+                        
+                        // Vérifier que le token existe
+                        if (!result.token || result.token.trim() === '') {
+                            console.error('[Login] ❌ Token manquant dans la réponse');
+                            popupLogin.openPopup({
+                                title: 'Erreur',
+                                content: 'La réponse du serveur ne contient pas de token. Veuillez réessayer.',
+                                color: 'red',
+                                options: true
+                            });
+                            return;
+                        }
+                        
+                        // Convertir les données en format compatible
+                        const accountData = authAPI.convertToAccountFormat(result);
+                        
+                        // Vérifier que le token a bien été stocké
+                        if (!accountData.access_token || accountData.access_token.trim() === '') {
+                            console.error('[Login] ❌ Token non stocké');
+                            popupLogin.openPopup({
+                                title: 'Erreur',
+                                content: 'Erreur lors du stockage du token. Veuillez réessayer.',
+                                color: 'red',
+                                options: true
+                            });
+                            return;
+                        }
+                        
+                        console.log('[Login] ✅ Connexion réussie pour:', result.username);
+                        
+                        await this.saveData(accountData);
+                        popupLogin.closePopup();
+                    }
+                });
+            }
+        }
+    }
+
+    // Méthodes Microsoft, Crack et AZauth désactivées - Utilisation de l'API uniquement
+    // Ces méthodes sont bloquées pour forcer l'authentification via la base de données
 
     async saveData(connectionData) {
         let configClient = await this.db.readData('configClient');

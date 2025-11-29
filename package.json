@@ -9,7 +9,7 @@
         "email": "fallenglorydev@gmail.com",
         "url": "https://earthkingdoms-mc.fr"
     },
-    "url": "https://files.earthkingdoms-mc.fr/launcher",
+    "url": "https://earthkingdoms-mc.fr",
     "scripts": {
         "start": "cross-env-shell NODE_ENV=dev electron .",
         "dev": "cross-env-shell DEV_TOOL=open nodemon --exec npm start",

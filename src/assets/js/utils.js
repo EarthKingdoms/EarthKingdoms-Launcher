@@ -39,24 +39,39 @@ async function setBackground(theme) {
 }
 
 async function changePanel(id) {
+    console.log(`[changePanel] Changement vers le panneau: ${id}`);
     let panel = document.querySelector(`.${id}`);
+    if (!panel) {
+        console.error(`[changePanel] Panneau .${id} introuvable dans le DOM`);
+        return;
+    }
+    
     let active = document.querySelector(`.active`);
 
     if (active && active !== panel) {
-        active.querySelector('.container').style.opacity = 0;
-        active.querySelector('.container').style.transform = "scale(0.95)";
-        await new Promise(resolve => setTimeout(resolve, 400));
-
+        const activeContainer = active.querySelector('.container');
+        if (activeContainer) {
+            activeContainer.style.opacity = 0;
+            activeContainer.style.transform = "scale(0.95)";
+            await new Promise(resolve => setTimeout(resolve, 400));
+            activeContainer.style.visibility = "hidden";
+        }
         active.classList.remove("active");
-        active.querySelector('.container').style.visibility = "hidden";
     }
 
+    const panelContainer = panel.querySelector('.container');
+    if (!panelContainer) {
+        console.error(`[changePanel] Container introuvable dans le panneau .${id}`);
+        return;
+    }
+    
     panel.classList.add("active");
-    panel.querySelector('.container').style.visibility = "visible";
-    panel.querySelector('.container').style.opacity = 1;
+    panelContainer.style.visibility = "visible";
+    panelContainer.style.opacity = 1;
     setTimeout(() => {
-        panel.querySelector('.container').style.transform = "scale(1)";
+        panelContainer.style.transform = "scale(1)";
     }, 100);
+    console.log(`[changePanel] Panneau ${id} affiché avec succès`);
 }
 
 async function appdata() {
@@ -64,14 +79,68 @@ async function appdata() {
 }
 
 async function addAccount(data) {
+    // Vérifier si l'élément .accounts-list existe dans le DOM
+    const accountsList = document.querySelector('.accounts-list');
+    if (!accountsList) {
+        return { id: data.ID, skip: true };
+    }
+    
     // Vérifier si le compte est déjà affiché dans la liste
     let existingElement = document.getElementById(data.ID);
     if(existingElement) {
         return existingElement; // Le compte est déjà affiché
     }
     
-    let skin = false
-    if (data?.profile?.skins[0]?.base64) skin = await new skin2D().creatHeadTexture(data.profile.skins[0].base64);
+    let skin = false;
+    
+    // Gérer les skins pour les comptes EarthKingdoms (via API)
+    if (data?.meta?.type === 'EarthKingdoms') {
+        let skinUrl = null;
+        let fallbackUrl = `https://earthkingdoms-mc.fr/skins/${data.name}.png`;
+        
+        // Utiliser skin_url si disponible, sinon utiliser l'URL par pseudo
+        if (data?.meta?.skin_url) {
+            skinUrl = data.meta.skin_url;
+            if (skinUrl.startsWith('/skins/')) {
+                skinUrl = `https://earthkingdoms-mc.fr${skinUrl}`;
+            } else if (!skinUrl.startsWith('http')) {
+                // Si c'est juste un nom de fichier, utiliser le format par pseudo
+                skinUrl = fallbackUrl;
+            }
+        } else {
+            // Fallback : utiliser l'URL par pseudo (format SkinRestorer)
+            skinUrl = fallbackUrl;
+        }
+        
+        // Charger le skin avec un timeout pour éviter les blocages
+        try {
+            const skinPromise = new skin2D().creatHeadTexture(skinUrl);
+            const timeoutPromise = new Promise((_, reject) => 
+                setTimeout(() => reject(new Error('Timeout')), 3000)
+            );
+            skin = await Promise.race([skinPromise, timeoutPromise]);
+        } catch (error) {
+            // Si l'URL spécifique échoue, essayer le fallback
+            if (data?.meta?.skin_url && skinUrl !== fallbackUrl) {
+                try {
+                    const fallbackPromise = new skin2D().creatHeadTexture(fallbackUrl);
+                    const timeoutPromise = new Promise((_, reject) => 
+                        setTimeout(() => reject(new Error('Timeout')), 3000)
+                    );
+                    skin = await Promise.race([fallbackPromise, timeoutPromise]);
+                } catch (fallbackError) {
+                    skin = false;
+                }
+            } else {
+                skin = false;
+            }
+        }
+    } 
+    // Gérer les skins pour les comptes Microsoft/Mojang (ancien système)
+    else if (data?.profile?.skins[0]?.base64) {
+        skin = await new skin2D().creatHeadTexture(data.profile.skins[0].base64);
+    }
+    
     let div = document.createElement("div");
     div.classList.add("account");
     div.id = data.ID;
@@ -85,28 +154,105 @@ async function addAccount(data) {
             <div class="icon-account-delete delete-profile-icon"></div>
         </div>
     `
-    return document.querySelector('.accounts-list').appendChild(div);
+    
+    return accountsList.appendChild(div);
 }
 
 async function accountSelect(data) {
+    if (!data || !data.ID) {
+        console.error('[accountSelect] Données invalides');
+        return;
+    }
+    
     let account = document.getElementById(`${data.ID}`);
+    if (!account) {
+        return;
+    }
+    
     let activeAccount = document.querySelector('.account-select')
-
     if (activeAccount) activeAccount.classList.toggle('account-select');
     account.classList.add('account-select');
-    if (data?.profile?.skins[0]?.base64) await headplayer(data.profile.skins[0].base64);
+    
+    // Gérer les skins pour les comptes EarthKingdoms (via API)
+    if (data?.meta?.type === 'EarthKingdoms') {
+        let skinUrl = null;
+        let fallbackUrl = `https://earthkingdoms-mc.fr/skins/${data.name}.png`;
+        
+        // Utiliser skin_url si disponible, sinon utiliser l'URL par pseudo
+        if (data?.meta?.skin_url) {
+            skinUrl = data.meta.skin_url;
+            if (skinUrl.startsWith('/skins/')) {
+                skinUrl = `https://earthkingdoms-mc.fr${skinUrl}`;
+            } else if (!skinUrl.startsWith('http')) {
+                // Si c'est juste un nom de fichier, utiliser le format par pseudo
+                skinUrl = fallbackUrl;
+            }
+        } else {
+            // Fallback : utiliser l'URL par pseudo (format SkinRestorer)
+            skinUrl = fallbackUrl;
+        }
+        
+        try {
+            const headPromise = headplayer(skinUrl);
+            const timeoutPromise = new Promise((_, reject) => 
+                setTimeout(() => reject(new Error('Timeout')), 3000)
+            );
+            await Promise.race([headPromise, timeoutPromise]);
+        } catch (error) {
+            // Si l'URL spécifique échoue, essayer le fallback
+            if (data?.meta?.skin_url && skinUrl !== fallbackUrl) {
+                try {
+                    const fallbackPromise = headplayer(fallbackUrl);
+                    const timeoutPromise = new Promise((_, reject) => 
+                        setTimeout(() => reject(new Error('Timeout')), 3000)
+                    );
+                    await Promise.race([fallbackPromise, timeoutPromise]);
+                } catch (fallbackError) {
+                    // Utiliser le skin par défaut
+                    const defaultSkin = document.querySelector(".player-head");
+                    if (defaultSkin) {
+                        defaultSkin.style.backgroundImage = `url(./assets/images/default/steve.png)`;
+                    }
+                }
+            } else {
+                // Utiliser le skin par défaut
+                const defaultSkin = document.querySelector(".player-head");
+                if (defaultSkin) {
+                    defaultSkin.style.backgroundImage = `url(./assets/images/default/steve.png)`;
+                }
+            }
+        }
+    }
+    // Gérer les skins pour les comptes Microsoft/Mojang (ancien système)
+    else if (data?.profile?.skins[0]?.base64) {
+        try {
+            await headplayer(data.profile.skins[0].base64);
+        } catch (error) {
+            // Erreur silencieuse
+        }
+    } else {
+        // Skin par défaut si aucun skin disponible
+        const defaultSkin = document.querySelector(".player-head");
+        if (defaultSkin) {
+            defaultSkin.style.backgroundImage = `url(./assets/images/default/steve.png)`;
+        }
+    }
 }
 
-async function headplayer(skinBase64) {
-    let skin = await new skin2D().creatHeadTexture(skinBase64);
-    document.querySelector(".player-head").style.backgroundImage = `url(${skin})`;
+async function headplayer(skinData) {
+    // skinData peut être une URL HTTP ou un base64
+    let skin = await new skin2D().creatHeadTexture(skinData);
+    const playerHead = document.querySelector(".player-head");
+    if (playerHead) {
+        playerHead.style.backgroundImage = `url(${skin})`;
+    }
 }
 
 async function setStatus(opt) {
     let nameServerElement = document.querySelector('.server-status-name');
     let statusServerElement = document.querySelector('.server-status-text');
     let playersOnline = document.querySelector('.status-player-count .player-count');
-    console.log('Initializing server status... (refresh every 15sec)')
+    // Log réduit pour éviter le spam
 
     async function updateStatus() {
         if(!opt) {
@@ -117,8 +263,20 @@ async function setStatus(opt) {
 
         let { ip, port, nameServer } = opt;
         nameServerElement.innerHTML = nameServer;
-        let status = new Status(ip, port);
-        let statusServer = await status.getStatus().then(res => res).catch(err => err);
+        
+        // FORCER l'utilisation de earthkingdoms-mc.fr:25565 (ignorer l'IP/port de l'instance)
+        const serverIp = 'earthkingdoms-mc.fr';
+        const serverPort = 25565;
+        
+        console.log(`[Status] Vérification serveur: ${serverIp}:${serverPort} (forcé, ignoré: ${ip}:${port})`);
+        
+        let status = new Status(serverIp, serverPort);
+        let statusServer = await status.getStatus().then(res => res).catch(err => {
+            console.error(`[Status] Erreur détaillée:`, err);
+            console.error(`[Status] Type d'erreur:`, typeof err);
+            console.error(`[Status] Stack:`, err?.stack);
+            return { error: true, message: err?.message || err?.toString() || 'Erreur de connexion' };
+        });
 
         if(!statusServer.error) {
             statusServerElement.classList.remove('red');
@@ -126,8 +284,13 @@ async function setStatus(opt) {
             document.querySelector('.status-player-count').classList.remove('red');
             document.querySelector('.status-player-count').classList.add('green');
             statusServerElement.innerHTML = `En ligne - ${statusServer.ms} ms`;
-            playersOnline.innerHTML = statusServer.playersConnect;
+            playersOnline.innerHTML = statusServer.playersConnect || 0;
         } else {
+            console.warn(`[Status] Serveur hors ligne: ${statusServer.message || 'Erreur inconnue'}`);
+            statusServerElement.classList.remove('green');
+            statusServerElement.classList.add('red');
+            document.querySelector('.status-player-count')?.classList.remove('green');
+            document.querySelector('.status-player-count')?.classList.add('red');
             statusServerElement.innerHTML = `Hors ligne - 0 ms`;
             playersOnline.innerHTML = '0';
         }

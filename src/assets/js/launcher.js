@@ -8,11 +8,17 @@ import Home from './panels/home.js';
 import Settings from './panels/settings.js';
 
 import { logger, config, changePanel, database, popup, setBackground, accountSelect, addAccount, pkg } from './utils.js';
-const { AZauth, Microsoft, Mojang } = require('minecraft-java-core');
+import authAPI from './utils/auth-api.js';
 
 const { ipcRenderer } = require('electron');
 const fs = require('fs');
 const os = require('os');
+
+// Polyfill fetch pour minecraft-java-core si nécessaire
+if (typeof globalThis.fetch === 'undefined') {
+    const nodeFetch = require('node-fetch');
+    globalThis.fetch = nodeFetch;
+}
 
 class Launcher {
     async init() {
@@ -21,8 +27,30 @@ class Launcher {
         this.shortcut()
         await setBackground()
         this.initFrame();
-        this.config = await config.GetConfig().then(res => res).catch(err => err);
-        if(await this.config.error) return this.errorConnect()
+        // Récupérer la configuration avec gestion d'erreur améliorée
+        this.config = await config.GetConfig().then(res => res).catch(err => {
+            // Si erreur, utiliser une config par défaut
+            console.warn('[Launcher] Erreur lors du chargement de la config, utilisation de la config par défaut');
+            return {
+                online: false,
+                client_id: null,
+                maintenance: false,
+                maintenance_message: null,
+                dataDirectory: 'EarthKingdoms-Launcher'
+            };
+        });
+        
+        // Vérifier si c'est une erreur (ancien format)
+        if(this.config && this.config.error) {
+            console.warn('[Launcher] Erreur de configuration détectée, utilisation de la config par défaut');
+            this.config = {
+                online: false,
+                client_id: null,
+                maintenance: false,
+                maintenance_message: null,
+                dataDirectory: 'EarthKingdoms-Launcher'
+            };
+        }
         this.db = new database();
         await this.initConfigClient();
         this.createPanels(Login, Home, Settings);
@@ -138,109 +166,110 @@ class Launcher {
                     await this.db.deleteData('accounts', account_ID)
                     continue
                 }
-                if(account.meta.type === 'Xbox') {
-                    console.log(`Account Type : ${account.meta.type} | Username : ${account.name}`);
-                    popupRefresh.openPopup({
-                        title: 'Connexion',
-                        content: `Type de compte : ${account.meta.type} | Utilisateur : ${account.name}`,
-                        color: 'var(--dark)',
-                        background: false
-                    });
-
-                    let refresh_accounts = await new Microsoft(this.config.client_id).refresh(account);
-
-                    if(refresh_accounts.error) {
-                        await this.db.deleteData('accounts', account_ID)
-                        if(account_ID === account_selected) {
-                            configClient.account_selected = null
-                            await this.db.updateData('configClient', configClient)
+                
+                // Gérer uniquement les comptes EarthKingdoms (via API)
+                if(account.meta && account.meta.type === 'EarthKingdoms') {
+                    
+                    // Vérifier si le token launcher est expiré
+                    const token = account.access_token;
+                    const tokenExpires = account.token_expires;
+                    
+                    if(token && token !== 'offline' && !authAPI.isTokenExpired(tokenExpires)) {
+                        // Token valide (non expiré) - vérifier avec l'API pour obtenir les infos utilisateur
+                        // Note: La route /api/auth/launcher/verify est principalement pour le mod serveur,
+                        // mais on peut l'utiliser ici pour vérifier et obtenir les infos
+                        popupRefresh.openPopup({
+                            title: 'Vérification',
+                            content: `Vérification du compte ${account.name}...`,
+                            color: 'var(--dark)',
+                            background: false
+                        });
+                        
+                        try {
+                            const verifyResult = await authAPI.verifyToken(token);
+                            
+                            if(!verifyResult.error && verifyResult.valid) {
+                                // Token valide - mettre à jour les données utilisateur
+                                const updatedAccount = account;
+                                updatedAccount.meta.username = verifyResult.username;
+                                updatedAccount.meta.is_admin = verifyResult.is_admin || 0;
+                                updatedAccount.name = verifyResult.username; // Utiliser le pseudo de l'API (source de vérité)
+                                
+                                updatedAccount.ID = account_ID;
+                                await this.db.updateData('accounts', updatedAccount, account_ID);
+                                await addAccount(updatedAccount);
+                                if(account_ID === account_selected) await accountSelect(updatedAccount);
+                            } else {
+                                // Token invalide - garder le compte quand même
+                                account.ID = account_ID;
+                                await addAccount(account);
+                                if(account_ID === account_selected) await accountSelect(account);
+                            }
+                        } catch (error) {
+                            console.error(`[Account] Erreur vérification:`, error);
+                            account.ID = account_ID;
+                            await addAccount(account);
+                            if(account_ID === account_selected) await accountSelect(account);
+                        } finally {
+                            popupRefresh.closePopup();
                         }
-                        console.error(`[Account] ${account.name}: ${refresh_accounts.errorMessage}`);
-                        continue;
-                    }
-
-                    refresh_accounts.ID = account_ID
-                    await this.db.updateData('accounts', refresh_accounts, account_ID)
-                    await addAccount(refresh_accounts)
-                    if(account_ID === account_selected) await accountSelect(refresh_accounts)
-                } else if(account.meta.type === 'AZauth') {
-                    console.log(`Account Type : ${account.meta.type} | Username : ${account.name}`);
-                    popupRefresh.openPopup({
-                        title: 'Connexion',
-                        content: `Type de compte : ${account.meta.type} | Utilisateur : ${account.name}`,
-                        color: 'var(--dark)',
-                        background: false
-                    });
-                    let refresh_accounts = await new AZauth(this.config.online).verify(account);
-
-                    if(refresh_accounts.error) {
-                        await this.db.deleteData('accounts', account_ID)
-                        if(account_ID === account_selected) {
-                            configClient.account_selected = null
-                            await this.db.updateData('configClient', configClient)
+                    } else {
+                        // Token expiré ou absent - garder le compte sans vérification API
+                        account.ID = account_ID;
+                        try {
+                            await addAccount(account);
+                        } catch (error) {
+                            console.error(`[Account] Erreur ajout compte:`, error);
                         }
-                        console.error(`[Account] ${account.name}: ${refresh_accounts.message}`);
-                        continue;
-                    }
-
-                    refresh_accounts.ID = account_ID
-                    await this.db.updateData('accounts', refresh_accounts, account_ID)
-                    await addAccount(refresh_accounts)
-                    if(account_ID === account_selected) await accountSelect(refresh_accounts)
-                } else if(account.meta.type === 'Mojang') {
-                    console.log(`Account Type : ${account.meta.type} | Username : ${account.name}`);
-                    popupRefresh.openPopup({
-                        title: 'Connexion',
-                        content: `Type de compte : ${account.meta.type} | Utilisateur : ${account.name}`,
-                        color: 'var(--dark)',
-                        background: false
-                    });
-                    if(account.meta.online === false) {
-                        // Pour les comptes crack, on garde l'UUID existant pour éviter de perdre le stuff
-                        let refresh_accounts = account; // On garde les données existantes
-                        refresh_accounts.ID = account_ID
-                        await addAccount(refresh_accounts)
-                        await this.db.updateData('accounts', refresh_accounts, account_ID)
-                        if(account_ID === account_selected) await accountSelect(refresh_accounts)
-                        continue;
-                    }
-
-                    let refresh_accounts = await Mojang.refresh(account);
-
-                    if(refresh_accounts.error) {
-                        await this.db.deleteData('accounts', account_ID)
                         if(account_ID === account_selected) {
-                            configClient.account_selected = null
-                            await this.db.updateData('configClient', configClient)
+                            try {
+                                await accountSelect(account);
+                            } catch (error) {
+                                console.error(`[Account] Erreur sélection:`, error);
+                            }
                         }
-                        console.error(`[Account] ${account.name}: ${refresh_accounts.errorMessage}`);
-                        continue;
                     }
-
-                    refresh_accounts.ID = account_ID
-                    await this.db.updateData('accounts', refresh_accounts, account_ID)
-                    await addAccount(refresh_accounts)
-                    if(account_ID === account_selected) await accountSelect(refresh_accounts)
+                } else if(account.meta && (account.meta.type === 'Xbox' || account.meta.type === 'Mojang' || account.meta.type === 'AZauth')) {
+                    // COMPTES PREMIUM/CRACK BLOQUÉS - Supprimer les anciens comptes
+                    console.warn(`[Account] ${account.name}: Type de compte bloqué (${account.meta.type}). Suppression...`);
+                    await this.db.deleteData('accounts', account_ID);
+                    if(account_ID === account_selected) {
+                        configClient.account_selected = null;
+                        await this.db.updateData('configClient', configClient);
+                    }
                 } else {
                     console.error(`[Account] ${account.name}: Account Type Not Found`);
-                    await this.db.deleteData('accounts', account_ID)
+                    await this.db.deleteData('accounts', account_ID);
                     if(account_ID === account_selected) {
-                        configClient.account_selected = null
-                        await this.db.updateData('configClient', configClient)
+                        configClient.account_selected = null;
+                        await this.db.updateData('configClient', configClient);
                     }
                 }
             }
-
+            
             accounts = await this.db.readAllData('accounts')
             configClient = await this.db.readData('configClient')
             account_selected = configClient ? configClient.account_selected : null
 
-            if(!account_selected) {
-                let uuid = accounts[0].ID
-                if(uuid) {
-                    configClient.account_selected = uuid
+            if(!account_selected && accounts.length > 0) {
+                let firstAccount = accounts[0];
+                if(firstAccount && firstAccount.ID) {
+                    configClient.account_selected = firstAccount.ID
                     await this.db.updateData('configClient', configClient)
-                    await accountSelect(uuid)
+                    try {
+                        await accountSelect(firstAccount);
+                    } catch (error) {
+                        console.error('[Launcher] Erreur sélection:', error);
+                    }
+                }
+            } else if(account_selected) {
+                let selectedAccount = accounts.find(acc => acc.ID === account_selected);
+                if(selectedAccount) {
+                    try {
+                        await accountSelect(selectedAccount);
+                    } catch (error) {
+                        console.error('[Launcher] Erreur sélection:', error);
+                    }
                 }
             }
 
