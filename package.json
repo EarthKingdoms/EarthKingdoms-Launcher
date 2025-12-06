@@ -5,8 +5,8 @@
     "description": "Launcher Minecraft pour le serveur EarthKingdoms",
     "main": "src/app.js",
     "author": {
-        "name": "OrgeAlexj06, EarthKingdoms Inc.",
-        "email": "fallenglorydev@gmail.com",
+        "name": "EarthKingdoms Inc.",
+        "email": "mail.earthkingdoms@gmail.com",
         "url": "https://earthkingdoms-mc.fr"
     },
     "url": "https://earthkingdoms-mc.fr",
@@ -22,19 +22,19 @@
         "ignore": "**/test"
     },
     "dependencies": {
-        "electron-updater": "^6.1.8",
-        "minecraft-java-core": "^4.2.1",
+        "electron-updater": "^6.6.2",
+        "minecraft-java-core": "^4.2.3",
         "node-bdd": "^2.0.4",
         "node-fetch": "^2.7.0",
         "xml-js": "^1.6.11"
     },
     "devDependencies": {
-        "cross-env": "^7.0.3",
-        "electron": "^30.5.1",
+        "cross-env": "^10.1.0",
+        "electron": "^39.2.4",
         "electron-builder": "^26.0.12",
-        "javascript-obfuscator": "^4.1.0",
-        "jimp": "^0.22.12",
-        "nodemon": "^3.1.2",
+        "javascript-obfuscator": "^4.1.1",
+        "jimp": "^1.6.0",
+        "nodemon": "^3.1.11",
         "png2icons": "^2.0.1"
     },
     "repository": {

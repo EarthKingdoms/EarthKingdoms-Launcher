@@ -336,7 +336,7 @@ class Login {
         }
         
         let account = await this.db.createData('accounts', connectionData)
-        let instanceSelect = configClient.instance_selct
+        let instanceSelect = configClient.instance_select
         let instancesList = await config.getInstanceList()
         configClient.account_selected = account.ID;
 
@@ -346,7 +346,7 @@ class Login {
                 if(whitelist !== account.name) {
                     if(instance.name === instanceSelect) {
                         let newInstanceSelect = instancesList.find(i => i.whitelistActive === false)
-                        configClient.instance_selct = newInstanceSelect.name
+                        configClient.instance_select = newInstanceSelect.name
                         await setStatus(newInstanceSelect.status)
                     }
                 }
