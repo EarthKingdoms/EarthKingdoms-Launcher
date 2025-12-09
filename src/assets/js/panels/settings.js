@@ -25,20 +25,20 @@ class Settings {
         document.querySelector('.nav-box').addEventListener('click', e => {
             const button = e.target.closest('.nav-settings-btn');
 
-            if(button) {
+            if (button) {
                 let id = button.id;
 
                 let activeSettingsBTN = document.querySelector('.active-settings-BTN');
                 let activeContainerSettings = document.querySelector('.active-container-settings');
 
-                if(id === 'save') {
+                if (id === 'save') {
                     return changePanel('home');
                 }
 
-                if(activeSettingsBTN) activeSettingsBTN.classList.toggle('active-settings-BTN');
+                if (activeSettingsBTN) activeSettingsBTN.classList.toggle('active-settings-BTN');
                 button.classList.add('active-settings-BTN');
 
-                if(activeContainerSettings) activeContainerSettings.classList.toggle('active-container-settings');
+                if (activeContainerSettings) activeContainerSettings.classList.toggle('active-container-settings');
                 document.querySelector(`#${id}-tab`).classList.add('active-container-settings');
             }
         });
@@ -49,14 +49,14 @@ class Settings {
             let popupAccount = new popup()
             try {
                 let id = e.target.id
-                if(e.target.classList.contains('account')) {
+                if (e.target.classList.contains('account')) {
                     popupAccount.openPopup({
                         title: 'Connexion en cours',
                         content: 'Veuillez patienter...',
                         color: 'var(--dark)'
                     })
 
-                    if(id === 'add') {
+                    if (id === 'add') {
                         document.querySelector('.cancel-home').style.display = 'inline'
                         return changePanel('login')
                     }
@@ -68,7 +68,7 @@ class Settings {
                     return await this.db.updateData('configClient', configClient);
                 }
 
-                if(e.target.classList.contains("delete-profile")) {
+                if (e.target.classList.contains("delete-profile")) {
                     popupAccount.openPopup({
                         title: 'Connexion en cours',
                         content: 'Veuillez patienter...',
@@ -79,11 +79,11 @@ class Settings {
                     let accountListElement = document.querySelector('.accounts-list');
                     accountListElement.removeChild(deleteProfile);
 
-                    if(accountListElement.children.length === 1) return changePanel('login');
+                    if (accountListElement.children.length === 1) return changePanel('login');
 
                     let configClient = await this.db.readData('configClient');
 
-                    if(configClient.account_selected === id) {
+                    if (configClient.account_selected === id) {
                         let allAccounts = await this.db.readAllData('accounts');
                         configClient.account_selected = allAccounts[0].ID
                         await accountSelect(allAccounts[0]);
@@ -105,11 +105,11 @@ class Settings {
         let instanceSelect = configClient.instance_select
         let instancesList = await config.getInstanceList()
 
-        for(let instance of instancesList) {
-            if(instance.whitelistActive) {
+        for (let instance of instancesList) {
+            if (instance.whitelistActive) {
                 let whitelist = instance.whitelist.find(whitelist => whitelist === auth.name)
-                if(whitelist !== auth.name) {
-                    if(instance.name === instanceSelect) {
+                if (whitelist !== auth.name) {
+                    if (instance.name === instanceSelect) {
                         let newInstanceSelect = instancesList.find(i => i.whitelistActive === false)
                         configClient.instance_select = newInstanceSelect.name
                         await setStatus(newInstanceSelect.status)
@@ -136,7 +136,7 @@ class Settings {
             ramMax: config.java_config.java_memory.max
         } : { ramMin: "1", ramMax: "2" };
 
-        if(totalMem < ram.ramMin) {
+        if (totalMem < ram.ramMin) {
             config.java_config.java_memory = { min: 1, max: 2 };
             await this.db.updateData('configClient', config);
             ram = { ramMin: "1", ramMax: "2" }
@@ -175,11 +175,11 @@ class Settings {
             await new Promise((resolve) => {
                 let interval;
                 interval = setInterval(() => {
-                    if(javaPathInputFile.value !== '') resolve(clearInterval(interval));
+                    if (javaPathInputFile.value !== '') resolve(clearInterval(interval));
                 }, 100);
             });
 
-            if(javaPathInputFile.value.replace(".exe", '').endsWith("java") || javaPathInputFile.value.replace(".exe", '').endsWith("javaw")) {
+            if (javaPathInputFile.value.replace(".exe", '').endsWith("java") || javaPathInputFile.value.replace(".exe", '').endsWith("javaw")) {
                 let configClient = await this.db.readData('configClient')
                 let file = javaPathInputFile.files[0].path;
                 javaPathInputTxt.value = file;
@@ -289,33 +289,71 @@ class Settings {
         let closeBox = document.querySelector(".close-box");
         let closeLauncher = configClient?.launcher_config?.closeLauncher || "close-launcher";
 
-        if(closeLauncher === "close-launcher") {
+        if (closeLauncher === "close-launcher") {
             document.querySelector('.close-launcher').classList.add('active-close');
-        } else if(closeLauncher === "close-all") {
+        } else if (closeLauncher === "close-all") {
             document.querySelector('.close-all').classList.add('active-close');
-        } else if(closeLauncher === "close-none") {
+        } else if (closeLauncher === "close-none") {
             document.querySelector('.close-none').classList.add('active-close');
         }
 
         closeBox.addEventListener("click", async e => {
             const clickedBtn = e.target.closest('.close-btn');
 
-            if(!clickedBtn) return;
-            if(clickedBtn.classList.contains('active-close')) return;
+            if (!clickedBtn) return;
+            if (clickedBtn.classList.contains('active-close')) return;
 
             document.querySelector('.active-close')?.classList.remove('active-close');
 
             let configClient = await this.db.readData('configClient');
 
-            if(clickedBtn.classList.contains('close-launcher')) {
+            if (clickedBtn.classList.contains('close-launcher')) {
                 configClient.launcher_config.closeLauncher = "close-launcher";
-            } else if(clickedBtn.classList.contains('close-all')) {
+            } else if (clickedBtn.classList.contains('close-all')) {
                 configClient.launcher_config.closeLauncher = "close-all";
-            } else if(clickedBtn.classList.contains('close-none')) {
+            } else if (clickedBtn.classList.contains('close-none')) {
                 configClient.launcher_config.closeLauncher = "close-none";
             }
 
             clickedBtn.classList.add('active-close');
+
+            await this.db.updateData('configClient', configClient);
+        });
+
+        let gpuBox = document.querySelector(".gpu-box");
+        let gpuPreference = configClient?.launcher_config?.gpu_preference || "auto";
+
+        if (gpuPreference === "auto") {
+            document.querySelector('.gpu-auto').classList.add('active-gpu');
+        } else if (gpuPreference === "nvidia") {
+            document.querySelector('.gpu-nvidia').classList.add('active-gpu');
+        } else if (gpuPreference === "amd") {
+            document.querySelector('.gpu-amd').classList.add('active-gpu');
+        } else if (gpuPreference === "intel") {
+            document.querySelector('.gpu-intel').classList.add('active-gpu');
+        }
+
+        gpuBox.addEventListener("click", async e => {
+            const clickedBtn = e.target.closest('.gpu-btn');
+
+            if (!clickedBtn) return;
+            if (clickedBtn.classList.contains('active-gpu')) return;
+
+            document.querySelector('.active-gpu')?.classList.remove('active-gpu');
+
+            let configClient = await this.db.readData('configClient');
+
+            if (clickedBtn.classList.contains('gpu-auto')) {
+                configClient.launcher_config.gpu_preference = "auto";
+            } else if (clickedBtn.classList.contains('gpu-nvidia')) {
+                configClient.launcher_config.gpu_preference = "nvidia";
+            } else if (clickedBtn.classList.contains('gpu-amd')) {
+                configClient.launcher_config.gpu_preference = "amd";
+            } else if (clickedBtn.classList.contains('gpu-intel')) {
+                configClient.launcher_config.gpu_preference = "intel";
+            }
+
+            clickedBtn.classList.add('active-gpu');
 
             await this.db.updateData('configClient', configClient);
         });

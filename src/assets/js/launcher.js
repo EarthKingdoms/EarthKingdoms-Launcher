@@ -39,9 +39,9 @@ class Launcher {
                 dataDirectory: 'EarthKingdoms-Launcher'
             };
         });
-        
+
         // Vérifier si c'est une erreur (ancien format)
-        if(this.config && this.config.error) {
+        if (this.config && this.config.error) {
             console.warn('[Launcher] Erreur de configuration détectée, utilisation de la config par défaut');
             this.config = {
                 online: false,
@@ -59,7 +59,7 @@ class Launcher {
 
     initLog() {
         document.addEventListener('keydown', e => {
-            if(e.ctrlKey && e.shiftKey && e.keyCode === 73 || e.keyCode === 123) {
+            if (e.ctrlKey && e.shiftKey && e.keyCode === 73 || e.keyCode === 123) {
                 ipcRenderer.send('main-window-dev-tools-close');
                 ipcRenderer.send('main-window-dev-tools');
             }
@@ -69,7 +69,7 @@ class Launcher {
 
     shortcut() {
         document.addEventListener('keydown', e => {
-            if(e.ctrlKey && e.keyCode === 87) {
+            if (e.ctrlKey && e.keyCode === 87) {
                 ipcRenderer.send('main-window-close');
             }
         })
@@ -135,7 +135,8 @@ class Launcher {
                     download_multi: 5,
                     theme: 'sombre',
                     closeLauncher: 'close-launcher',
-                    intelEnabledMac: true
+                    intelEnabledMac: true,
+                    gpu_preference: 'auto'
                 }
             })
         }
@@ -143,7 +144,7 @@ class Launcher {
 
     createPanels(...panels) {
         let panelsElem = document.querySelector('.panels')
-        for(let panel of panels) {
+        for (let panel of panels) {
             console.log(`Initializing ${panel.name} Panel...`);
             let div = document.createElement('div');
             div.classList.add('panel', panel.id)
@@ -159,22 +160,22 @@ class Launcher {
         let account_selected = configClient ? configClient.account_selected : null
         let popupRefresh = new popup();
 
-        if(accounts?.length) {
-            for(let account of accounts) {
+        if (accounts?.length) {
+            for (let account of accounts) {
                 let account_ID = account.ID
-                if(account.error) {
+                if (account.error) {
                     await this.db.deleteData('accounts', account_ID)
                     continue
                 }
-                
+
                 // Gérer uniquement les comptes EarthKingdoms (via API)
-                if(account.meta && account.meta.type === 'EarthKingdoms') {
-                    
+                if (account.meta && account.meta.type === 'EarthKingdoms') {
+
                     // Vérifier si le token launcher est expiré
                     const token = account.access_token;
                     const tokenExpires = account.token_expires;
-                    
-                    if(token && token !== 'offline' && !authAPI.isTokenExpired(tokenExpires)) {
+
+                    if (token && token !== 'offline' && !authAPI.isTokenExpired(tokenExpires)) {
                         // Token valide (non expiré) - vérifier avec l'API pour obtenir les infos utilisateur
                         // Note: La route /api/auth/launcher/verify est principalement pour le mod serveur,
                         // mais on peut l'utiliser ici pour vérifier et obtenir les infos
@@ -184,32 +185,32 @@ class Launcher {
                             color: 'var(--dark)',
                             background: false
                         });
-                        
+
                         try {
                             const verifyResult = await authAPI.verifyToken(token);
-                            
-                            if(!verifyResult.error && verifyResult.valid) {
+
+                            if (!verifyResult.error && verifyResult.valid) {
                                 // Token valide - mettre à jour les données utilisateur
                                 const updatedAccount = account;
                                 updatedAccount.meta.username = verifyResult.username;
                                 updatedAccount.meta.is_admin = verifyResult.is_admin || 0;
                                 updatedAccount.name = verifyResult.username; // Utiliser le pseudo de l'API (source de vérité)
-                                
+
                                 updatedAccount.ID = account_ID;
                                 await this.db.updateData('accounts', updatedAccount, account_ID);
                                 await addAccount(updatedAccount);
-                                if(account_ID === account_selected) await accountSelect(updatedAccount);
+                                if (account_ID === account_selected) await accountSelect(updatedAccount);
                             } else {
                                 // Token invalide - garder le compte quand même
                                 account.ID = account_ID;
                                 await addAccount(account);
-                                if(account_ID === account_selected) await accountSelect(account);
+                                if (account_ID === account_selected) await accountSelect(account);
                             }
                         } catch (error) {
                             console.error(`[Account] Erreur vérification:`, error);
                             account.ID = account_ID;
                             await addAccount(account);
-                            if(account_ID === account_selected) await accountSelect(account);
+                            if (account_ID === account_selected) await accountSelect(account);
                         } finally {
                             popupRefresh.closePopup();
                         }
@@ -221,7 +222,7 @@ class Launcher {
                         } catch (error) {
                             console.error(`[Account] Erreur ajout compte:`, error);
                         }
-                        if(account_ID === account_selected) {
+                        if (account_ID === account_selected) {
                             try {
                                 await accountSelect(account);
                             } catch (error) {
@@ -229,31 +230,31 @@ class Launcher {
                             }
                         }
                     }
-                } else if(account.meta && (account.meta.type === 'Xbox' || account.meta.type === 'Mojang' || account.meta.type === 'AZauth')) {
+                } else if (account.meta && (account.meta.type === 'Xbox' || account.meta.type === 'Mojang' || account.meta.type === 'AZauth')) {
                     // COMPTES PREMIUM/CRACK BLOQUÉS - Supprimer les anciens comptes
                     console.warn(`[Account] ${account.name}: Type de compte bloqué (${account.meta.type}). Suppression...`);
                     await this.db.deleteData('accounts', account_ID);
-                    if(account_ID === account_selected) {
+                    if (account_ID === account_selected) {
                         configClient.account_selected = null;
                         await this.db.updateData('configClient', configClient);
                     }
                 } else {
                     console.error(`[Account] ${account.name}: Account Type Not Found`);
                     await this.db.deleteData('accounts', account_ID);
-                    if(account_ID === account_selected) {
+                    if (account_ID === account_selected) {
                         configClient.account_selected = null;
                         await this.db.updateData('configClient', configClient);
                     }
                 }
             }
-            
+
             accounts = await this.db.readAllData('accounts')
             configClient = await this.db.readData('configClient')
             account_selected = configClient ? configClient.account_selected : null
 
-            if(!account_selected && accounts.length > 0) {
+            if (!account_selected && accounts.length > 0) {
                 let firstAccount = accounts[0];
-                if(firstAccount && firstAccount.ID) {
+                if (firstAccount && firstAccount.ID) {
                     configClient.account_selected = firstAccount.ID
                     await this.db.updateData('configClient', configClient)
                     try {
@@ -262,9 +263,9 @@ class Launcher {
                         console.error('[Launcher] Erreur sélection:', error);
                     }
                 }
-            } else if(account_selected) {
+            } else if (account_selected) {
                 let selectedAccount = accounts.find(acc => acc.ID === account_selected);
-                if(selectedAccount) {
+                if (selectedAccount) {
                     try {
                         await accountSelect(selectedAccount);
                     } catch (error) {
@@ -273,7 +274,7 @@ class Launcher {
                 }
             }
 
-            if(!accounts.length) {
+            if (!accounts.length) {
                 config.account_selected = null
                 await this.db.updateData('configClient', config);
                 popupRefresh.closePopup()

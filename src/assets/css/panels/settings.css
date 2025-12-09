@@ -521,4 +521,23 @@
 .active-close {
     border: 3px solid var(--element-color);
     transform: scale(1.05);
+}/* GPU Preference Buttons */
+.gpu-btn {
+    font-size: 0.95rem;
+    width: 150px;
+    text-align: center;
+    border: 2px solid var(--dark);
+    border-radius: 15px;
+    padding: 0.5rem;
+    cursor: pointer;
+    transition: transform 0.3s ease-in-out;
+}
+
+.gpu-btn:hover {
+    transform: scale(1.05);
+}
+
+.active-gpu {
+    border: 3px solid var(--element-color);
+    transform: scale(1.05);
 }
