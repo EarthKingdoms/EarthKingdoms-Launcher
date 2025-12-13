@@ -58,80 +58,168 @@ class Home {
             return;
         }
 
-        let news = await config.getNews().then(res => {
-            console.log('[Home] News récupérées:', res);
-            return res;
-        }).catch(err => {
-            console.error('[Home] Erreur lors de la récupération des news:', err);
-            return false;
-        });
+        // Afficher un chargement
+        newsElement.innerHTML = `
+            <div class="news-block">
+                <div class="news-header">
+                    <div class="header-text">
+                        <div class="title">Chargement des actualités...</div>
+                    </div>
+                </div>
+            </div>`;
 
-        if (news) {
-            if (!news.length) {
-                let blockNews = document.createElement('div');
-                blockNews.classList.add('news-block');
-                blockNews.innerHTML = `
+        try {
+            const response = await fetch('https://earthkingdoms-mc.fr/news/');
+            if (!response.ok) throw new Error('Erreur réseau');
+
+            const htmlText = await response.text();
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(htmlText, 'text/html');
+            const newsSection = doc.querySelector('.news-section');
+
+            if (newsSection) {
+                // Nettoyer les liens relatifs pour les images si nécessaire
+                // Les images sur le site pourraient être en /assets/..., il faudrait peut-être ajouter le domaine
+                // Pour l'instant on injecte tel quel, à voir si le CSS du site est compatible
+
+                // On vide la liste et on injecte le contenu récupéré
+                newsElement.innerHTML = '';
+
+                // On peut soit injecter tout le bloc, soit itérer sur les enfants si on veut reformater
+                // Ici on injecte le contenu de .news-section directement
+                // On ajoute une classe pour isoler le style si besoin
+
+                // Cependant, le CSS du launcher s'attend peut-être à une structure spécifique (.news-block)
+                // Si le site a sa propre structure, le CSS du launcher risque de ne pas s'appliquer correctement
+                // Ou au contraire, le HTML du site va s'afficher mais sans style.
+
+                // Essayons d'adapter le style ou d'injecter tel quel en espérant que le CSS global ne casse pas tout
+                // On va créer un conteneur qui imite le style du site ou adapte le CSS
+
+                // Pour faire simple et répondre à la demande "afficher ce qu'il y a dans .news-section"
+                // On va juste injecter le HTML
+
+                // Petite correction pour les liens/images relatifs si besoin
+                // (Supprimé car géré plus bas dans la boucle principale)
+
+                console.log('[Home] Structure détectée: .news-grid avec .news-card');
+
+                // Nouvelle logique basée sur le debug HTML réel
+                // Structure: <a class="news-card"> <img ...> <div class="news-content"> <h2>...</h2> <p class="date">...</p> <p>desc</p> </div> </a>
+                let newsCards = doc.querySelectorAll('.news-card');
+
+                // Fallback si jamais ils changent encore
+                if (newsCards.length === 0) {
+                    newsCards = doc.querySelectorAll('.card');
+                }
+
+                console.log('[Home] News trouvées:', newsCards.length);
+
+                newsElement.innerHTML = '';
+                let hasItems = false;
+
+                if (newsCards.length > 0) {
+                    newsCards.forEach(card => {
+                        // Le lien est l'élément lui-même car c'est un <a>
+                        let linkEl = card;
+
+                        let imgEl = card.querySelector('img');
+                        let contentEl = card.querySelector('.news-content');
+
+                        let titleEl = contentEl ? contentEl.querySelector('h2') : card.querySelector('h2');
+                        let dateEl = contentEl ? contentEl.querySelector('.date') : card.querySelector('.date');
+
+                        // La description est le p qui n'est pas la date
+                        let descEl = null;
+                        if (contentEl) {
+                            let paragraphs = contentEl.querySelectorAll('p');
+                            paragraphs.forEach(p => {
+                                if (!p.classList.contains('date') && p.textContent.trim().length > 0) {
+                                    descEl = p;
+                                }
+                            });
+                        }
+
+                        // Données
+                        let title = titleEl ? titleEl.textContent.trim() : 'Sans titre';
+                        let date = dateEl ? dateEl.textContent.trim() : '';
+                        let desc = descEl ? descEl.textContent.trim() : '';
+
+                        // URL Image
+                        let imgSrc = 'assets/images/icon.png';
+                        if (imgEl) {
+                            let src = imgEl.getAttribute('src');
+                            if (src) {
+                                if (src.startsWith('/')) {
+                                    imgSrc = 'https://earthkingdoms-mc.fr' + src;
+                                } else if (src.startsWith('http')) {
+                                    imgSrc = src;
+                                }
+                            }
+                        }
+
+                        // URL Lien
+                        let linkUrl = '#';
+                        if (linkEl.href) { // .href donne l'absolu souvent si parser le fait bien, sinon getAttribute
+                            let href = linkEl.getAttribute('href');
+                            if (href) {
+                                if (href.startsWith('/')) {
+                                    linkUrl = 'https://earthkingdoms-mc.fr' + href;
+                                } else if (href.startsWith('http')) {
+                                    linkUrl = href;
+                                }
+                            }
+                        }
+
+                        let newsCard = document.createElement('div');
+                        newsCard.className = 'ek-news-card';
+                        newsCard.title = title;
+                        newsCard.onclick = () => { const { shell } = require('electron'); shell.openExternal(linkUrl); };
+
+                        newsCard.innerHTML = `
+                            <div class="ek-news-image" style="background-image: url('${imgSrc}');"></div>
+                            <div class="ek-news-info">
+                                <div class="ek-news-header">
+                                    <span class="ek-news-title">${title}</span>
+                                    <span class="ek-news-date">${date}</span>
+                                </div>
+                                ${desc ? `<div class="ek-news-desc">${desc}</div>` : ''}
+                            </div>
+                         `;
+
+                        newsElement.appendChild(newsCard);
+                        hasItems = true;
+                    });
+                }
+
+                if (!hasItems) {
+                    console.warn('[Home] Aucune news trouvée (.news-card)');
+                    newsElement.innerHTML = '<div class="ek-news-empty">Aucune actualité trouvée.</div>';
+                }
+
+            } else {
+                console.error('[Home] HTML récupéré mais structure inconnue (pas de .news-section)');
+                // throw new Error('Structure HTML inconnue');
+                newsElement.innerHTML = '<div class="ek-news-empty">Impossible de lire les actualités.</div>';
+            }
+
+        } catch (err) {
+            console.error('[Home] Erreur lors de la récupération des news:', err);
+            newsElement.innerHTML = `
+                <div class="news-block">
                     <div class="news-header">
                         <img class="server-status-icon" src="assets/images/icon.png">
                         <div class="header-text">
-                            <div class="title">Aucune news n'est actuellement disponible.</div>
-                        </div>
-                        <div class="date">
-                            <div class="day">1</div>
-                            <div class="month">Janvier</div>
+                            <div class="title">Impossible de charger les actualités.</div>
                         </div>
                     </div>
                     <div class="news-content">
                         <div class="bbWrapper">
-                            <p>Vous pourrez suivre ici toutes les news relatives au serveur.</p>
-                        </div>
-                    </div>`
-                newsElement.appendChild(blockNews);
-            } else {
-                for (let News of news) {
-                    let date = this.getdate(News.publish_date)
-                    let blockNews = document.createElement('div');
-                    blockNews.classList.add('news-block');
-                    blockNews.innerHTML = `
-                        <div class="news-header">
-                            <img class="server-status-icon" src="assets/images/icon.png">
-                            <div class="header-text">
-                                <div class="title">${News.title}</div>
-                            </div>
-                            <div class="date">
-                                <div class="day">${date.day}</div>
-                                <div class="month">${date.month}</div>
-                            </div>
-                        </div>
-                        <div class="news-content">
-                            <div class="bbWrapper">
-                                <p>${News.content.replace(/\n/g, '</br>')}</p>
-                                <p class="news-author">Auteur - <span>${News.author}</span></p>
-                            </div>
-                        </div>`
-                    newsElement.appendChild(blockNews);
-                }
-            }
-        } else {
-            let blockNews = document.createElement('div');
-            blockNews.classList.add('news-block');
-            blockNews.innerHTML = `
-                <div class="news-header">
-                        <img class="server-status-icon" src="assets/images/icon.png">
-                        <div class="header-text">
-                            <div class="title">Erreur</div>
-                        </div>
-                        <div class="date">
-                            <div class="day">1</div>
-                            <div class="month">Janvier</div>
+                            <p>Veuillez vérifier votre connexion internet ou consulter le site directement.</p>
+                            <a href="#" onclick="shell.openExternal('https://earthkingdoms-mc.fr/news/')" style="color: var(--primary);">Voir sur le site</a>
                         </div>
                     </div>
-                    <div class="news-content">
-                        <div class="bbWrapper">
-                            <p>Connexion impossible avec le serveur des news.</br>Merci de vérifier votre configuration.</p>
-                        </div>
-                    </div>`
-            newsElement.appendChild(blockNews);
+                </div>`;
         }
     }
 

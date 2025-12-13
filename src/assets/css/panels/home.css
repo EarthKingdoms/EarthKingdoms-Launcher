@@ -45,9 +45,9 @@
     font-size: 1.8rem;
     color: var(--dark);
     text-shadow: 1px 1px 0 var(--light),
-                -1px -1px 0 var(--light),
-                1px -1px 0 var(--light),
-                -1px 1px 0 var(--light);
+        -1px -1px 0 var(--light),
+        1px -1px 0 var(--light),
+        -1px 1px 0 var(--light);
 }
 
 .server-status-text {
@@ -55,9 +55,9 @@
     font-size: 0.8rem;
     color: #FF0409;
     text-shadow: 1px 1px 0 var(--contour-status),
-                -1px -1px 0 var(--contour-status),
-                1px -1px 0 var(--contour-status),
-                -1px 1px 0 var(--contour-status);
+        -1px -1px 0 var(--contour-status),
+        1px -1px 0 var(--contour-status),
+        -1px 1px 0 var(--contour-status);
 }
 
 .server-status-infos .red {
@@ -137,74 +137,177 @@
     background: var(--background-light);
     color: var(--dark);
     text-shadow: 1px 1px 0 var(--light),
-                -1px -1px 0 var(--light),
-                1px -1px 0 var(--light),
-                -1px 1px 0 var(--light);
+        -1px -1px 0 var(--light),
+        1px -1px 0 var(--light),
+        -1px 1px 0 var(--light);
 }
 
+/* Configuration de la grille */
 .news-list {
     display: flex;
     flex-direction: column;
-    align-items: center;
+    gap: 12px;
     width: 100%;
-    height: 100%;
-    border-radius: 10px;
-    margin: 1rem 0;
+    /* Limite la hauteur pour ne pas toucher le bas (bouton jouer) */
+    max-height: 55vh;
+    overflow-y: auto;
+    padding: 5px 10px 20px 0;
+    /* Padding en bas pour l'espace */
 }
 
-.news-block {
-    width: 100%;
-    margin: 0 0 1rem 0;
-    border-radius: 10px;
-    background: var(--background-light);
+/* Scrollbar invisible/fine pour un look clean */
+.news-list::-webkit-scrollbar {
+    width: 4px;
 }
 
-.news-header {
+.news-list::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.news-list::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+}
+
+.news-list::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+/* Carte d'actualité - Premium & Dark */
+.ek-news-card {
     display: flex;
-    justify-content: space-between;
-    padding: 1rem 1.5rem;
-    align-items: center;
+    flex-direction: row;
+    background: rgba(0, 0, 0, 0.4);
+    /* Fond sombre semi-transparent */
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    /* Bordure subtile */
+    border-radius: 8px;
+    overflow: hidden;
+    height: 85px;
+    /* Hauteur fixe */
+    min-height: 85px;
+    /* Empêche l'écrasement vertical */
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    position: relative;
+    backdrop-filter: blur(5px);
+    /* Effet de flou arrière-plan (glassmorphism léger) */
 }
 
-.header-text .title {
-    font-weight: 900;
-    font-size: 1.3rem;
-    text-align: center;
-    text-shadow: 1px 1px 0 var(--light),
-                -1px -1px 0 var(--light),
-                1px -1px 0 var(--light),
-                -1px 1px 0 var(--light);
+/* Hover Effect */
+.ek-news-card:hover {
+    transform: translateX(5px);
+    background: rgba(255, 255, 255, 0.05);
+    /* L'éclaircit légèrement */
+    border-color: rgba(255, 255, 255, 0.2);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
 }
 
-.news-header .date {
+/* Indicateur de hover sur la gauche */
+.ek-news-card::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    background: var(--primary);
+    /* Utilise la couleur primaire du launcher */
+    opacity: 0;
+    transition: opacity 0.3s;
+    z-index: 2;
+}
+
+.ek-news-card:hover::before {
+    opacity: 1;
+}
+
+/* Image (carré à gauche) */
+.ek-news-image {
+    width: 85px;
+    /* Largeur fixe */
+    height: 85px;
+    /* Hauteur fixe égale au conteneur */
+    background-size: cover;
+    /* Remplit sans déformer */
+    background-position: center;
+    background-repeat: no-repeat;
+    flex-shrink: 0;
+    /* Empêche l'écrasement horizontal */
+    border-right: 1px solid rgba(255, 255, 255, 0.05);
+    /* Pas de masque */
+}
+
+/* Conteneur Info */
+.ek-news-info {
+    padding: 8px 15px;
     display: flex;
     flex-direction: column;
+    justify-content: center;
+    flex-grow: 1;
+    overflow: hidden;
+}
+
+/* En-tête (Date au dessus ou à côté) */
+.ek-news-header {
+    display: flex;
+    justify-content: space-between;
     align-items: center;
-    font-weight: 900;
-    font-size: 1.2rem;
-    text-shadow: 1px 1px 0 var(--light),
-                -1px -1px 0 var(--light),
-                1px -1px 0 var(--light),
-                -1px 1px 0 var(--light);
+    margin-bottom: 4px;
 }
 
-.news-content .bbWrapper {
-    padding: 0 1.5rem 1rem;
-    font-size: 1.2rem;
-}
-
-.news-content .bbWrapper p {
-    margin: 0;
-}
-
-.news-content .bbWrapper .news-author {
-    margin-top: 1rem;
-    text-align: end;
-    font-size: 0.8rem;
-}
-
-.news-content .bbWrapper .news-author span {
+.ek-news-title {
+    font-size: 0.95rem;
+    font-family: 'Segoe UI', sans-serif;
+    /* Police système clean */
     font-weight: 700;
+    color: #eee;
+    /* Texte presque blanc */
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 70%;
+    letter-spacing: 0.3px;
+}
+
+/* Date stylisée */
+.ek-news-date {
+    font-size: 0.7rem;
+    color: rgba(255, 255, 255, 0.5);
+    font-weight: 600;
+    text-transform: uppercase;
+    background: rgba(255, 255, 255, 0.05);
+    padding: 2px 6px;
+    border-radius: 4px;
+}
+
+/* Description */
+.ek-news-desc {
+    font-size: 0.8rem;
+    color: rgba(255, 255, 255, 0.7);
+    /* Gris clair */
+    line-height: 1.3;
+    font-weight: 400;
+
+    /* Truncate après 2 lignes */
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+/* Message si vide */
+.ek-news-empty {
+    text-align: center;
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 0.9rem;
+    padding: 20px;
+}
+
+/* Masquer les boutons "Lire la suite" s'ils sont dans le HTML importé (souvent .btn) */
+.news-item-wrapper .btn {
+    display: none !important;
 }
 
 /*****************************************************************************\
@@ -434,8 +537,8 @@
     z-index: -1;
     background-color: #008542 !important;
     box-shadow: 0 -4px rgb(21 108 0 / 50%) inset,
-    0 4px rgb(100 253 31 / 99%) inset, -4px 0 rgb(100 253 31 / 50%) inset,
-    4px 0 rgb(21 108 0 / 50%) inset;
+        0 4px rgb(100 253 31 / 99%) inset, -4px 0 rgb(100 253 31 / 50%) inset,
+        4px 0 rgb(21 108 0 / 50%) inset;
 }
 
 .play-instance:after {
@@ -453,7 +556,7 @@
 
 .play-instance:hover:before {
     box-shadow: 0 -4px rgb(0 0 0 / 50%) inset, 0 4px rgb(255 255 255 / 20%) inset,
-    -4px 0 rgb(255 255 255 / 20%) inset, 4px 0 rgb(0 0 0 / 50%) inset;
+        -4px 0 rgb(255 255 255 / 20%) inset, 4px 0 rgb(0 0 0 / 50%) inset;
 }
 
 .play-instance:hover:after {
@@ -535,6 +638,7 @@
     0% {
         transform: translateX(-100%);
     }
+
     100% {
         transform: translateX(100%);
     }
