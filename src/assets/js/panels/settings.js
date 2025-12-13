@@ -48,52 +48,75 @@ class Settings {
         document.querySelector('.accounts-list').addEventListener('click', async e => {
             let popupAccount = new popup()
             try {
-                let id = e.target.id
-                if (e.target.classList.contains('account')) {
+                // Handle Delete Profile
+                let deleteElement = e.target.closest('.delete-profile');
+                if (deleteElement) {
+                    let id = parseInt(deleteElement.id);
+                    if (isNaN(id)) return;
+
                     popupAccount.openPopup({
                         title: 'Connexion en cours',
                         content: 'Veuillez patienter...',
                         color: 'var(--dark)'
                     })
 
-                    if (id === 'add') {
-                        document.querySelector('.cancel-home').style.display = 'inline'
-                        return changePanel('login')
+                    await this.db.deleteData('accounts', id);
+
+                    // Remove the account element from DOM
+                    let accountDiv = deleteElement.closest('.account');
+                    if (accountDiv) {
+                        accountDiv.remove();
                     }
 
-                    let account = await this.db.readData('accounts', id);
-                    let configClient = await this.setInstance(account);
-                    await accountSelect(account);
-                    configClient.account_selected = account.ID;
-                    return await this.db.updateData('configClient', configClient);
-                }
-
-                if (e.target.classList.contains("delete-profile")) {
-                    popupAccount.openPopup({
-                        title: 'Connexion en cours',
-                        content: 'Veuillez patienter...',
-                        color: 'var(--dark)'
-                    })
-                    await this.db.deleteData('accounts', id);
-                    let deleteProfile = document.getElementById(`${id}`);
                     let accountListElement = document.querySelector('.accounts-list');
-                    accountListElement.removeChild(deleteProfile);
-
                     if (accountListElement.children.length === 1) return changePanel('login');
 
                     let configClient = await this.db.readData('configClient');
 
                     if (configClient.account_selected === id) {
                         let allAccounts = await this.db.readAllData('accounts');
-                        configClient.account_selected = allAccounts[0].ID
-                        await accountSelect(allAccounts[0]);
-                        let newInstanceSelect = await this.setInstance(allAccounts[0]);
-                        configClient.instance_select = newInstanceSelect.instance_select
-                        return await this.db.updateData('configClient', configClient);
+                        if (allAccounts && allAccounts.length > 0) {
+                            configClient.account_selected = allAccounts[0].ID
+                            await accountSelect(allAccounts[0]);
+                            let newInstanceSelect = await this.setInstance(allAccounts[0]);
+                            configClient.instance_select = newInstanceSelect.instance_select
+                            return await this.db.updateData('configClient', configClient);
+                        } else {
+                            // Should theoretically be handled by length check above, but safe fallback
+                            return changePanel('login');
+                        }
                     }
+                    return; // Stop here to avoid triggering account select
+                }
+
+                // Handle Account Select (only if not delete)
+                let accountElement = e.target.closest('.account');
+                if (accountElement) {
+                    if (accountElement.id === 'add') {
+                        document.querySelector('.cancel-home').style.display = 'inline'
+                        return changePanel('login')
+                    }
+
+                    let id = parseInt(accountElement.id);
+                    if (isNaN(id)) return;
+
+                    popupAccount.openPopup({
+                        title: 'Connexion en cours',
+                        content: 'Veuillez patienter...',
+                        color: 'var(--dark)'
+                    })
+
+                    let account = await this.db.readData('accounts', id);
+                    if (!account) throw new Error("Account not found");
+
+                    let configClient = await this.setInstance(account);
+                    await accountSelect(account);
+                    configClient.account_selected = account.ID;
+                    return await this.db.updateData('configClient', configClient);
                 }
             } catch (err) {
                 console.error(err)
+                // Close popup if error occurs (already in finally, but good form to be aware)
             } finally {
                 popupAccount.closePopup();
             }
