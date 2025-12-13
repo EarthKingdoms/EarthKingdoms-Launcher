@@ -44,7 +44,7 @@ class Home {
         let configClient = await this.db.readData('configClient');
         let auth = await this.db.readData('accounts', configClient.account_selected);
 
-        if(auth && auth.name) {
+        if (auth && auth.name) {
             document.querySelector('.username-display').textContent = auth.name;
         } else {
             document.querySelector('.username-display').textContent = "";
@@ -57,7 +57,7 @@ class Home {
             console.warn('[Home] Élément .news-list introuvable');
             return;
         }
-        
+
         let news = await config.getNews().then(res => {
             console.log('[Home] News récupérées:', res);
             return res;
@@ -65,9 +65,9 @@ class Home {
             console.error('[Home] Erreur lors de la récupération des news:', err);
             return false;
         });
-        
-        if(news) {
-            if(!news.length) {
+
+        if (news) {
+            if (!news.length) {
                 let blockNews = document.createElement('div');
                 blockNews.classList.add('news-block');
                 blockNews.innerHTML = `
@@ -88,7 +88,7 @@ class Home {
                     </div>`
                 newsElement.appendChild(blockNews);
             } else {
-                for(let News of news) {
+                for (let News of news) {
                     let date = this.getdate(News.publish_date)
                     let blockNews = document.createElement('div');
                     blockNews.classList.add('news-block');
@@ -149,7 +149,7 @@ class Home {
         let configClient = await this.db.readData('configClient')
         let auth = await this.db.readData('accounts', configClient.account_selected)
         let instancesList = await config.getInstanceList()
-        
+
         // Vérifier si des instances sont disponibles
         if (!instancesList || instancesList.length === 0) {
             console.warn('[Home] Aucune instance disponible');
@@ -160,7 +160,7 @@ class Home {
                 instanceBTN.style.pointerEvents = 'none';
                 instanceBTN.title = 'Aucune instance disponible';
             }
-            
+
             // Afficher un message à l'utilisateur
             let popupInfo = new popup();
             popupInfo.openPopup({
@@ -171,7 +171,7 @@ class Home {
             });
             return;
         }
-        
+
         let instanceSelect = instancesList.find(i => i.name === configClient?.instance_select) ? configClient?.instance_select : null
 
         let instanceBTN = document.querySelector('.play-instance')
@@ -179,12 +179,12 @@ class Home {
         let instancesListPopup = document.querySelector('.instances-List')
         let instanceCloseBTN = document.querySelector('.close-popup')
 
-        if(instancesList.length === 1) {
+        if (instancesList.length === 1) {
             document.querySelector('.instance-select').style.display = 'none'
             instanceBTN.style.paddingRight = '0'
         }
 
-        if(!instanceSelect) {
+        if (!instanceSelect) {
             let newInstanceSelect = instancesList.find(i => i.whitelistActive === false) || instancesList[0];
             if (newInstanceSelect) {
                 let configClient = await this.db.readData('configClient')
@@ -194,11 +194,11 @@ class Home {
             }
         }
 
-        for(let instance of instancesList) {
-            if(instance.whitelistActive) {
+        for (let instance of instancesList) {
+            if (instance.whitelistActive) {
                 let whitelist = instance.whitelist.find(whitelist => whitelist === auth?.name)
-                if(whitelist !== auth?.name) {
-                    if(instance.name === instanceSelect) {
+                if (whitelist !== auth?.name) {
+                    if (instance.name === instanceSelect) {
                         let newInstanceSelect = instancesList.find(i => i.whitelistActive === false)
                         let configClient = await this.db.readData('configClient')
                         configClient.instance_select = newInstanceSelect.name
@@ -218,7 +218,7 @@ class Home {
                     }
                 }
             } else console.log(`Initializing instance ${instance.name}...`)
-            if(instance.name === instanceSelect) {
+            if (instance.name === instanceSelect) {
                 // Surcharger l'IP/port si nécessaire
                 const statusConfig = instance.status || {};
                 if (!statusConfig.ip || statusConfig.ip.includes('192.168') || statusConfig.ip === 'localhost') {
@@ -236,11 +236,11 @@ class Home {
         instancePopup.addEventListener('click', async e => {
             let configClient = await this.db.readData('configClient')
 
-            if(e.target.classList.contains('instance-elements')) {
+            if (e.target.classList.contains('instance-elements')) {
                 let newInstanceSelect = e.target.id
                 let activeInstanceSelect = document.querySelector('.active-instance')
 
-                if(activeInstanceSelect) activeInstanceSelect.classList.toggle('active-instance');
+                if (activeInstanceSelect) activeInstanceSelect.classList.toggle('active-instance');
                 e.target.classList.add('active-instance');
 
                 configClient.instance_select = newInstanceSelect
@@ -268,13 +268,13 @@ class Home {
             let instanceSelect = configClient.instance_select
             let auth = await this.db.readData('accounts', configClient.account_selected)
 
-            if(e.target.classList.contains('instance-select')) {
+            if (e.target.classList.contains('instance-select')) {
                 instancesListPopup.innerHTML = ''
-                for(let instance of instancesList) {
-                    if(instance.whitelistActive) {
+                for (let instance of instancesList) {
+                    if (instance.whitelistActive) {
                         instance.whitelist.map(whitelist => {
-                            if(whitelist === auth?.name) {
-                                if(instance.name === instanceSelect) {
+                            if (whitelist === auth?.name) {
+                                if (instance.name === instanceSelect) {
                                     instancesListPopup.innerHTML += `<div id="${instance.name}" class="instance-elements active-instance">${instance.name}</div>`
                                 } else {
                                     instancesListPopup.innerHTML += `<div id="${instance.name}" class="instance-elements">${instance.name}</div>`
@@ -282,7 +282,7 @@ class Home {
                             }
                         })
                     } else {
-                        if(instance.name === instanceSelect) {
+                        if (instance.name === instanceSelect) {
                             instancesListPopup.innerHTML += `<div id="${instance.name}" class="instance-elements active-instance">${instance.name}</div>`
                         } else {
                             instancesListPopup.innerHTML += `<div id="${instance.name}" class="instance-elements">${instance.name}</div>`
@@ -293,7 +293,16 @@ class Home {
                 instancePopup.style.display = 'flex'
             }
 
-            if(!e.target.classList.contains('instance-select')) await this.startGame()
+            if (!e.target.classList.contains('instance-select')) {
+                // Feedback visuel immédiat
+                let playBtn = document.querySelector('.play-instance box-icon-element');
+                if (playBtn) playBtn.innerHTML = 'Vérification...';
+
+                await this.startGame();
+
+                // Reset si ça fail (optionnel, startGame gère généralement le succès par changement de vue ou erreur)
+                if (playBtn) playBtn.innerHTML = 'Jouer';
+            }
         })
 
         instanceCloseBTN.addEventListener('click', () => instancePopup.style.display = 'none')
@@ -303,7 +312,7 @@ class Home {
         let launch = new Launch()
         let configClient = await this.db.readData('configClient')
         let instance = await config.getInstanceList()
-        
+
         // Vérifier qu'il y a des instances disponibles
         if (!instance || instance.length === 0) {
             let popupError = new popup();
@@ -315,16 +324,16 @@ class Home {
             });
             return;
         }
-        
+
         let authenticator = await this.db.readData('accounts', configClient.account_selected)
         let options = instance.find(i => i.name === configClient.instance_select)
-        
+
         // Logs réduits - seulement en cas d'erreur
         if (!options || !options.name) {
             console.error('[Home] ❌ Instance invalide ou manquante');
             return;
         }
-        
+
         // Vérifier que l'instance sélectionnée existe
         if (!options) {
             let popupError = new popup();
@@ -336,7 +345,7 @@ class Home {
             });
             return;
         }
-        
+
         // Récupérer et formater les fichiers de l'instance depuis l'API
         // S'assurer que l'URL pointe vers l'instance spécifique
         let filesUrl = options.url;
@@ -358,7 +367,7 @@ class Home {
                 });
                 return;
             }
-            
+
             const contentType = filesResponse.headers.get('content-type') || '';
             if (!contentType.includes('application/json')) {
                 console.error(`[Home] ❌ La réponse n'est pas du JSON (Content-Type: ${contentType})`);
@@ -371,10 +380,10 @@ class Home {
                 });
                 return;
             }
-            
+
             const filesList = await filesResponse.json();
             console.log(`[Home] ${Array.isArray(filesList) ? filesList.length : '?'} fichier(s) récupéré(s) de l'API`);
-            
+
             // Vérifier que filesList est un tableau (requis par minecraft-java-core)
             if (!Array.isArray(filesList)) {
                 console.error('[Home] ❌ La réponse de l\'API n\'est pas un tableau:', typeof filesList);
@@ -388,10 +397,10 @@ class Home {
                 });
                 return;
             }
-            
+
             // Filtrer les fichiers invalides
             const validFiles = filesList.filter(file => file && typeof file === 'object' && file.path);
-            
+
             if (validFiles.length === 0) {
                 console.error('[Home] ❌ Aucun fichier valide dans la liste !');
                 let popupError = new popup();
@@ -403,11 +412,11 @@ class Home {
                 });
                 return;
             }
-            
+
             // Logs réduits - seulement les statistiques essentielles
             const modsCount = validFiles.filter(file => file.path && typeof file.path === 'string' && file.path.startsWith('mods/')).length;
             console.log(`[Home] ${validFiles.length} fichiers (${modsCount} mods) prêts pour téléchargement`);
-            
+
             // Stocker la liste des mods du serveur pour comparaison ultérieure
             // (extrait le nom du fichier depuis le chemin, ex: "mods/kubejs-1.20.1.jar" -> "kubejs-1.20.1.jar")
             const serverMods = validFiles
@@ -417,7 +426,7 @@ class Home {
                     return pathParts[pathParts.length - 1]; // Dernier élément = nom du fichier
                 })
                 .filter(name => name.endsWith('.jar'));
-            
+
             // Vérifier si "mods" est ignoré (important)
             if (options.ignored && Array.isArray(options.ignored) && options.ignored.includes('mods')) {
                 console.warn('[Home] ⚠️ ATTENTION: "mods" est dans ignored - les mods ne seront PAS téléchargés !');
@@ -441,261 +450,51 @@ class Home {
 
         // Vérifier et injecter le token launcher pour les comptes EarthKingdoms
         let jvmArgs = options.jvm_args ? [...options.jvm_args] : [];
-        
-        if(authenticator?.meta?.type === 'EarthKingdoms') {
-            const token = authenticator.access_token;
-            const tokenExpires = authenticator.token_expires;
-            
-            // Logs réduits pour éviter le spam
-            if (token) {
-                console.log('[EarthKingdoms Auth] Token:', `${token.substring(0, 16)}... (longueur: ${token.length})`);
-                // Vérifier la validité du token avant le lancement
-                if (token.length !== 64) {
-                    console.warn('[EarthKingdoms Auth] ⚠️ Token de longueur suspecte (attendu: 64 caractères hex)');
-                }
-            } else {
-                console.warn('[EarthKingdoms Auth] ⚠️ Token manquant');
-            }
-            
-            // Vérifier si le token existe et n'est pas vide
-            if(!token || token.trim() === '') {
-                console.error('[EarthKingdoms Auth] ❌ Token manquant ou vide');
-                let popupError = new popup();
-                popupError.openPopup({
-                    title: 'Token manquant',
-                    content: 'Aucun token d\'authentification trouvé. Veuillez vous reconnecter via le panneau de connexion.',
-                    color: 'red',
-                    options: true
-                });
-                
-                // Déconnecter l'utilisateur en supprimant le compte
-                await this.db.deleteData('accounts', authenticator.ID);
-                if(configClient.account_selected === authenticator.ID) {
-                    configClient.account_selected = null;
-                    await this.db.updateData('configClient', configClient);
-                }
-                
-                // Rediriger vers le panneau de connexion
-                changePanel('login');
-                return;
-            }
-            
-            // Vérifier si le token est expiré et tenter le rafraîchissement immédiatement
-            if (tokenExpires) {
-                // tokenExpires est un timestamp Unix en secondes (confirmé côté serveur)
-                // Convertir en millisecondes pour Date (new Date() attend des millisecondes)
-                // Vérifier si c'est déjà en millisecondes (> 10000000000 = après 2001) pour compatibilité
-                const expiresTimestamp = tokenExpires > 10000000000 ? tokenExpires : tokenExpires * 1000;
-                const expiresAt = new Date(expiresTimestamp);
-                const now = new Date();
-                
-                // Logs de vérification token réduits - seulement en cas de problème
-                
-                if (now > expiresAt) {
-                    const expiredMinutes = Math.floor((now - expiresAt) / 1000 / 60);
-                    console.warn(`[EarthKingdoms Auth] ⚠️ Token expiré depuis ${expiredMinutes} minutes - tentative de rafraîchissement...`);
-                    
-                    // Tenter le rafraîchissement même si expiré (le serveur peut accepter un token récemment expiré)
-                    try {
-                        const refreshResult = await authAPI.refreshToken(token);
-                        
-                        if (refreshResult.success && refreshResult.token && !refreshResult.error) {
-                            console.log('[EarthKingdoms Auth] ✅ Token rafraîchi avec succès');
-                            // Mettre à jour le token dans l'authenticator
-                            authenticator.access_token = refreshResult.token;
-                            authenticator.token_expires = refreshResult.expires;
-                            token = refreshResult.token; // Utiliser le nouveau token
-                            tokenExpires = refreshResult.expires; // Mettre à jour la variable locale
-                            // Sauvegarder dans la base de données
-                            await this.db.updateData('accounts', authenticator);
-                            console.log('[EarthKingdoms Auth] ✅ Token mis à jour dans la base de données');
-                        } else {
-                            console.error('[EarthKingdoms Auth] ❌ Échec du rafraîchissement:', refreshResult.errorMessage || 'Raison inconnue');
-                            console.error('[EarthKingdoms Auth] ❌ Détails:', refreshResult);
-                            // Continuer avec l'ancien token, mais afficher un avertissement
-                            console.warn('[EarthKingdoms Auth] ⚠️ Continuation avec le token expiré - le jeu peut ne pas démarrer');
-                        }
-                    } catch (refreshError) {
-                        console.error('[EarthKingdoms Auth] ❌ Erreur lors du rafraîchissement:', refreshError);
-                        console.error('[EarthKingdoms Auth] ❌ Stack:', refreshError.stack);
-                        console.warn('[EarthKingdoms Auth] ⚠️ Continuation avec le token expiré - le jeu peut ne pas démarrer');
-                    }
+
+        if (authenticator?.meta?.type === 'EarthKingdoms') {
+            try {
+                // Utiliser la méthode centralisée pour obtenir un token valide
+                // Gère automatiquement l'expiration, la fenêtre de grâce et le rafraîchissement
+                console.log('[Home] Vérification de la session EarthKingdoms...');
+                const { token, account: updatedAccount, updated } = await authAPI.getValidToken(authenticator);
+
+                // Si le compte a été mis à jour (refresh token), sauvegarder en BDD
+                if (updated) {
+                    await this.db.updateData('accounts', updatedAccount);
+                    console.log('[Home] ✅ Session mise à jour et sauvegardée.');
                 } else {
-                    const timeLeft = Math.floor((expiresAt - now) / 1000 / 60);
-                    console.log(`[EarthKingdoms Auth] Token valide pour encore ${timeLeft} minutes`);
+                    console.log('[Home] ✅ Session valide.');
                 }
-            }
-            
-            // Vérifier que tokenExpires existe (après le rafraîchissement potentiel)
-            if(!tokenExpires) {
-                console.error('[EarthKingdoms Auth] ❌ Date d\'expiration manquante');
+
+                // Injecter le token validé dans les arguments Java
+                jvmArgs.push(`-Dearthkingdoms.token=${token}`);
+                jvmArgs.push(`-Dearthkingdoms.api.url=${authAPI.apiBaseUrl}/auth/launcher`);
+
+            } catch (err) {
+                console.error('[Home] ❌ Erreur Auth:', err.message);
                 let popupError = new popup();
                 popupError.openPopup({
-                    title: 'Token invalide',
-                    content: 'La date d\'expiration du token est manquante. Veuillez vous reconnecter.',
+                    title: 'Erreur d\'authentification',
+                    content: err.message,
                     color: 'red',
                     options: true
                 });
-                
-                // Déconnecter l'utilisateur
-                await this.db.deleteData('accounts', authenticator.ID);
-                if(configClient.account_selected === authenticator.ID) {
-                    configClient.account_selected = null;
-                    await this.db.updateData('configClient', configClient);
-                }
-                
-                changePanel('login');
-                return;
-            }
-            
-            // Vérifier si le token est expiré depuis plus de 30 minutes (seulement si le rafraîchissement a échoué)
-            // Note: Si le rafraîchissement a réussi, tokenExpires a été mis à jour, donc cette vérification utilisera la nouvelle date
-            if(authAPI.isTokenExpiredTooLong(tokenExpires)) {
-                const expiredTime = authAPI.getTokenTimeRemaining(tokenExpires);
-                const hoursExpired = Math.abs(Math.floor(expiredTime / 3600));
-                const minutesExpired = Math.abs(Math.floor((expiredTime % 3600) / 60));
-                console.warn(`[EarthKingdoms Auth] ⚠️ Token expiré depuis ${hoursExpired}h ${minutesExpired}min - rafraîchissement impossible`);
-                let popupError = new popup();
-                popupError.openPopup({
-                    title: 'Session expirée',
-                    content: `Votre session a expiré depuis ${hoursExpired > 0 ? hoursExpired + ' heure(s) et ' : ''}${minutesExpired} minute(s). Veuillez vous reconnecter via le panneau de connexion.`,
-                    color: 'red',
-                    options: true
-                });
-                
-                // Déconnecter l'utilisateur en supprimant le compte
-                await this.db.deleteData('accounts', authenticator.ID);
-                if(configClient.account_selected === authenticator.ID) {
-                    configClient.account_selected = null;
-                    await this.db.updateData('configClient', configClient);
-                }
-                
-                // Rediriger vers le panneau de connexion
-                changePanel('login');
-                return;
-            }
-            
-            // Calculer le temps restant (après rafraîchissement potentiel)
-            const timeRemaining = authAPI.getTokenTimeRemaining(tokenExpires);
-            if (timeRemaining < 3600) {
-                const hours = Math.floor(timeRemaining / 3600);
-                const minutes = Math.floor((timeRemaining % 3600) / 60);
-                console.log(`[EarthKingdoms Auth] Temps restant: ${hours}h ${minutes}min`);
-            }
-            
-            // Vérifier si le token est proche de l'expiration (< 1 heure) ou dans la fenêtre de grâce (30 min)
-            // Note: Si le token vient d'être rafraîchi ci-dessus, cette vérification utilisera la nouvelle date
-            const needsRefresh = authAPI.isTokenNearExpiration(tokenExpires) || 
-                                authAPI.isTokenInGracePeriod(tokenExpires);
-            // Ne pas vérifier isTokenExpired ici car on l'a déjà fait plus haut
-            
-            let finalToken = token; // Utiliser le token actuel (ou rafraîchi) par défaut
-            
-            if(needsRefresh) {
-                console.log('[EarthKingdoms Auth] Token proche de l\'expiration, rafraîchissement préventif...');
-                
-                const refreshResult = await authAPI.refreshToken(token);
-                
-                if(refreshResult.success && refreshResult.token) {
-                    // Token rafraîchi avec succès, utiliser le nouveau token
-                    finalToken = refreshResult.token;
-                    const newExpires = refreshResult.expires;
-                    
-                    console.log('[EarthKingdoms Auth] Token rafraîchi avec succès');
-                    console.log('[EarthKingdoms Auth] Nouvelle date d\'expiration:', newExpires);
-                    
-                    // Mettre à jour le token dans la base de données
-                    authenticator.access_token = finalToken;
-                    authenticator.token_expires = newExpires;
-                    await this.db.updateData('accounts', authenticator);
-                    
-                    console.log('[EarthKingdoms Auth] Token mis à jour dans la base de données');
-                } else {
-                    // Si le refresh échoue, vérifier que le token actuel est toujours valide
-                    console.warn('[EarthKingdoms Auth] Échec du rafraîchissement, vérification du token actuel...');
-                    const tokenCheck = await authAPI.checkToken(token);
-                    
-                    if(tokenCheck.error || !tokenCheck.valid) {
-                        console.error('[EarthKingdoms Auth] Token invalide:', tokenCheck.reason || tokenCheck.errorMessage);
-                        let popupError = new popup();
-                        popupError.openPopup({
-                            title: 'Token invalide',
-                            content: tokenCheck.reason || tokenCheck.errorMessage || 'Votre token d\'authentification est invalide ou expiré. Veuillez vous reconnecter.',
-                            color: 'red',
-                            options: true
-                        });
-                        
-                        // Déconnecter l'utilisateur en supprimant le compte
-                        await this.db.deleteData('accounts', authenticator.ID);
-                        if(configClient.account_selected === authenticator.ID) {
-                            configClient.account_selected = null;
-                            await this.db.updateData('configClient', configClient);
-                        }
-                        
-                        // Rediriger vers le panneau de connexion
-                        changePanel('login');
-                        return;
-                    }
-                    
-                    console.log('[EarthKingdoms Auth] Token actuel toujours valide');
-                }
-            } else {
-                // Vérifier quand même le token via l'API avant le lancement (logs réduits)
-                const tokenCheck = await authAPI.checkToken(finalToken);
-                
-                if(tokenCheck.error || !tokenCheck.valid) {
-                    console.error('[EarthKingdoms Auth] ❌ Token invalide:', tokenCheck.reason || tokenCheck.errorMessage);
-                    let popupError = new popup();
-                    popupError.openPopup({
-                        title: 'Token invalide',
-                        content: tokenCheck.reason || tokenCheck.errorMessage || 'Votre token d\'authentification est invalide. Veuillez vous reconnecter.',
-                        color: 'red',
-                        options: true
-                    });
-                    
-                    // Déconnecter l'utilisateur
+
+                // Si c'est une erreur critique (session expirée etc.), on déconnecte
+                if (err.message.includes("trop longtemps") || err.message.includes("reconnecter")) {
                     await this.db.deleteData('accounts', authenticator.ID);
-                    if(configClient.account_selected === authenticator.ID) {
+                    if (configClient.account_selected === authenticator.ID) {
                         configClient.account_selected = null;
                         await this.db.updateData('configClient', configClient);
                     }
-                    
                     changePanel('login');
-                    return;
                 }
-                
-                // Synchroniser l'expiration avec le serveur si nécessaire (sans logs)
-                if(tokenCheck.expires_at && tokenExpires) {
-                    const serverExpires = Math.floor(new Date(tokenCheck.expires_at).getTime() / 1000);
-                    const localExpires = tokenExpires;
-                    const diff = Math.abs(serverExpires - localExpires);
-                    
-                    if(diff > 60) {
-                        authenticator.token_expires = serverExpires;
-                        await this.db.updateData('accounts', authenticator);
-                    }
-                }
-            }
-            
-            // Vérifier une dernière fois que le token n'est pas vide avant injection
-            if(!finalToken || finalToken.trim() === '') {
-                console.error('[EarthKingdoms Auth] ❌ Token final vide, impossible de lancer');
-                let popupError = new popup();
-                popupError.openPopup({
-                    title: 'Erreur',
-                    content: 'Le token d\'authentification est vide. Veuillez vous reconnecter.',
-                    color: 'red',
-                    options: true
-                });
-                changePanel('login');
+
+                // Arrêter le lancement
                 return;
             }
-            
-            // Injecter le token (nouveau ou actuel) dans les arguments JVM
-            jvmArgs.push(`-Dearthkingdoms.token=${finalToken}`);
-            jvmArgs.push(`-Dearthkingdoms.api.url=https://earthkingdoms-mc.fr/api/auth/launcher`);
         }
-        
+
         // Vérifier et formater les données pour minecraft-java-core
         let ignoredList = [];
         if (options.ignored) {
@@ -755,7 +554,7 @@ class Home {
         // Calculer le chemin de base pour l'instance
         const basePath = `${await appdata()}/${process.platform == 'darwin' ? this.config.dataDirectory : `.${this.config.dataDirectory}`}`;
         const instancePath = `${basePath}/instances/${options.name}`;
-        
+
         // Ajouter des options Java pour les logs de crash (utile pour diagnostiquer les crashes)
         // Ces options permettent de générer des logs détaillés si Java crash
         // Doit être fait après la définition de instancePath
@@ -763,7 +562,7 @@ class Home {
         jvmArgs.push(`-XX:HeapDumpPath=${path.join(instancePath, 'heap_dump.hprof')}`);
         jvmArgs.push('-XX:+ExitOnOutOfMemoryError');
         jvmArgs.push('-XX:+ShowCodeDetailsInExceptionMessages');
-        
+
         // Résoudre le problème Kotlin Native avec Java 17
         // Java 17 bloque les packages avec "native" dans le nom (mot réservé)
         // Ces arguments permettent l'accès aux packages nécessaires pour Forge 1.20.1
@@ -777,14 +576,14 @@ class Home {
         jvmArgs.push('--add-opens=java.base/java.net=ALL-UNNAMED');
         jvmArgs.push('--add-opens=java.base/java.text=ALL-UNNAMED');
         jvmArgs.push('--add-opens=java.desktop/java.awt.font=ALL-UNNAMED');
-        
+
         // Solution spécifique pour Kotlin Native avec Java 17
         // Le problème vient d'un mod qui utilise kotlin.native.concurrent
         // Java 17 refuse "native" comme nom de package (mot réservé)
         // Note: --illegal-access=permit a été supprimé dans Java 17.0
         // Les --add-opens ci-dessus devraient suffire pour Forge 1.20.1
         // Si l'erreur Kotlin Native persiste, il faudra identifier et mettre à jour le mod problématique
-        
+
         // Utiliser l'URL corrigée pour les fichiers de l'instance
         let filesUrlForLaunch = options.url;
         if (!filesUrlForLaunch || filesUrlForLaunch.includes('instance=null')) {
@@ -792,22 +591,22 @@ class Home {
             const baseUrl = pkg.user ? `${pkg.url}/${pkg.user}` : pkg.url;
             filesUrlForLaunch = `${baseUrl}/launcher/files/?instance=${options.name}`;
         }
-        
+
         // Vérifier et logger la version utilisée AVANT de construire le loader
         // Logs réduits - seulement en cas d'erreur
         if (!options.loadder) {
             console.warn('[Home] ⚠️ options.loadder est manquant');
         }
-        
+
         const minecraftVersion = options.loadder?.minecraft_version;
         const loadderVersion = options.loadder?.loadder_version;
         const loaderType = (options.loadder?.loadder_type || 'none').toLowerCase();
-        
+
         // Logs de configuration réduits - seulement si manquant
         if (!minecraftVersion || !loadderVersion) {
             console.warn('[Home] ⚠️ Configuration loader incomplète:', { minecraftVersion, loadderVersion, loaderType });
         }
-        
+
         // Vérifier aussi les variantes possibles de noms de propriétés
         if (!minecraftVersion) {
             console.warn('[Home] ⚠️ minecraft_version non trouvé, vérification des variantes...');
@@ -820,7 +619,7 @@ class Home {
                 console.log('[Home] Clés de options.loadder:', Object.keys(options.loadder));
             }
         }
-        
+
         if (!minecraftVersion) {
             console.error('[Home] ❌ Version Minecraft manquante dans la configuration de l\'instance');
             console.error('[Home] Configuration complète de l\'instance:', JSON.stringify(options, null, 2));
@@ -833,7 +632,7 @@ class Home {
             });
             return;
         }
-        
+
         // Vérifier que ce n'est pas l'ancienne version 1.12.2
         if (minecraftVersion === '1.12.2' || minecraftVersion.includes('1.12')) {
             console.error('[Home] ❌ ATTENTION: Version 1.12.2 détectée ! La version attendue est 1.20.1');
@@ -846,17 +645,17 @@ class Home {
             });
             return;
         }
-        
+
         // Construire la version du loader selon le type
         // Pour Forge, le format doit être: minecraft_version-loadder_version (ex: 1.20.1-47.4.10)
         // Pour Fabric/Quilt, utiliser directement loadder_version
         let loaderBuild = loadderVersion || 'latest';
-        
+
         if (loaderType === 'forge' && minecraftVersion && loadderVersion) {
             // Combiner minecraft_version et loadder_version pour Forge
             loaderBuild = `${minecraftVersion}-${loadderVersion}`;
         }
-        
+
         let opt = {
             url: filesUrlForLaunch,
             authenticator: authenticator,
@@ -901,7 +700,7 @@ class Home {
                 max: `${configClient.java_config.java_memory.max * 1024}M`
             }
         }
-        
+
         // Logger la mémoire configurée pour vérification
         const memoryMax = configClient.java_config?.java_memory?.max || 0;
         const memoryMaxMo = memoryMax * 1024;
@@ -931,14 +730,14 @@ class Home {
             version: opt.version,
             loader: opt.loader
         });
-        
+
         // Capturer les sorties stdout/stderr du processus Minecraft pour debug
         let minecraftOutput = [];
         let minecraftErrors = [];
-        
+
         // Enregistrer l'heure de lancement pour mesurer la durée
         window.gameLaunchTime = Date.now();
-        
+
         try {
             launch.Launch(opt);
             console.log("[Home] ✅ Lancement initié avec succès");
@@ -946,16 +745,16 @@ class Home {
             if (opt.JVM_ARGS && opt.JVM_ARGS.length > 0) {
                 console.log(`[Home] Arguments JVM: ${opt.JVM_ARGS.length} argument(s) configuré(s)`);
                 // Afficher seulement les arguments importants
-                const importantArgs = opt.JVM_ARGS.filter(arg => 
-                    arg.includes('earthkingdoms') || 
-                    arg.includes('Xmx') || 
+                const importantArgs = opt.JVM_ARGS.filter(arg =>
+                    arg.includes('earthkingdoms') ||
+                    arg.includes('Xmx') ||
                     arg.includes('Xms')
                 );
                 if (importantArgs.length > 0) {
                     console.log('[Home] Arguments JVM importants:', importantArgs);
                 }
             }
-            
+
             // Écouter les sorties du processus si disponible
             if (launch.process) {
                 if (launch.process.stdout) {
@@ -963,7 +762,7 @@ class Home {
                         const output = data.toString();
                         minecraftOutput.push(output);
                         // Logger les erreurs importantes
-                        if (output.toLowerCase().includes('error') || 
+                        if (output.toLowerCase().includes('error') ||
                             output.toLowerCase().includes('exception') ||
                             output.toLowerCase().includes('crash') ||
                             output.toLowerCase().includes('fatal')) {
@@ -1014,12 +813,12 @@ class Home {
             let progressPercent = ((progress / size) * 100).toFixed(0);
             infoStarting.innerHTML = `Téléchargement ${progressPercent}%`;
 
-            if(lastSpeed !== null) {
+            if (lastSpeed !== null) {
                 infoStarting.innerHTML += ` ( ${lastSpeed} Mo/s )`;
             }
-            
+
             // Logs réduits - seulement pour les fichiers importants
-            if(element && element.path && progressPercent % 25 === 0) {
+            if (element && element.path && progressPercent % 25 === 0) {
                 const fileName = element.path.split('/').pop();
                 if (fileName.endsWith('.jar') && fileName.includes('mods')) {
                     console.log(`[Home] 📥 ${fileName} (${progressPercent}%)`);
@@ -1029,7 +828,7 @@ class Home {
             progressBar.value = progress;
             progressBar.max = size;
 
-            if(progressPercent == 100) {
+            if (progressPercent == 100) {
                 lastSpeed = null;
             }
         });
@@ -1049,10 +848,10 @@ class Home {
         });
 
         launch.on('speed', (speed) => {
-            if(speed) {
+            if (speed) {
                 let speedInMo = (speed / 1024 / 1024).toFixed(2);
 
-                if(lastSpeed !== speedInMo) {
+                if (lastSpeed !== speedInMo) {
                     lastSpeed = speedInMo;
                 }
             }
@@ -1066,14 +865,14 @@ class Home {
 
         let modsChecked = false; // Flag pour éviter les vérifications répétées
         let dataEventCount = 0; // Compteur pour éviter les logs répétitifs
-        
+
         launch.on('data', (e) => {
             dataEventCount++;
-            
+
             // Capturer toutes les sorties pour diagnostic
             const dataStr = String(e);
             minecraftOutput.push(dataStr);
-            
+
             // TOUJOURS logger le contenu brut pour voir ce qui se passe réellement
             // (même si ça fait beaucoup de logs, c'est nécessaire pour diagnostiquer)
             if (dataStr.length > 0) {
@@ -1086,7 +885,7 @@ class Home {
                     console.log(`[Minecraft] [RAW] (invisible, longueur: ${dataStr.length})`, JSON.stringify(dataStr.substring(0, 50)));
                 }
             }
-            
+
             // Vérifier les problèmes d'authentification dans les sorties
             const dataLower = dataStr.toLowerCase();
             if (dataLower.includes('invalid session') ||
@@ -1110,14 +909,14 @@ class Home {
                     console.error('[Minecraft] ⚠️ Longueur:', dataStr.length, 'caractères');
                 }
             }
-            
+
             // Détection spécifique de l'erreur Kotlin Native avec Java 17
-            if (dataLower.includes('kotlin.native.concurrent') || 
+            if (dataLower.includes('kotlin.native.concurrent') ||
                 (dataLower.includes('invalid package name') && dataLower.includes('native'))) {
                 console.error('[Minecraft] ❌ ERREUR KOTLIN NATIVE DÉTECTÉE');
                 console.error('[Minecraft] ❌ Un mod utilise kotlin.native.concurrent qui est incompatible avec Java 17');
                 console.error('[Minecraft] ❌ Message complet:', dataStr.substring(0, 1000));
-                
+
                 // Afficher un popup d'erreur explicite
                 if (!window.kotlinNativeErrorShown) {
                     window.kotlinNativeErrorShown = true;
@@ -1137,11 +936,11 @@ class Home {
                         const modsExist = fs.existsSync(modsPath);
                         let modsInfo = '';
                         let suspectMods = [];
-                        
+
                         if (modsExist) {
                             try {
                                 const modsFiles = fs.readdirSync(modsPath).filter(f => f.endsWith('.jar'));
-                                
+
                                 // Analyser chaque mod pour identifier les suspects
                                 // MAIS seulement ceux qui sont présents sur le serveur
                                 for (const modFile of modsFiles) {
@@ -1151,36 +950,36 @@ class Home {
                                         const serverModLower = serverMod.toLowerCase();
                                         const localModLower = modFile.toLowerCase();
                                         // Correspondance exacte ou partielle (pour gérer les versions)
-                                        return serverModLower === localModLower || 
-                                               serverModLower.includes(localModLower.split('-')[0]) ||
-                                               localModLower.includes(serverModLower.split('-')[0]);
+                                        return serverModLower === localModLower ||
+                                            serverModLower.includes(localModLower.split('-')[0]) ||
+                                            localModLower.includes(serverModLower.split('-')[0]);
                                     });
-                                    
+
                                     // Ne considérer que les mods présents sur le serveur
                                     if (!isOnServer) {
                                         console.log(`[Minecraft] ⚠️ Mod local ignoré (pas sur serveur): ${modFile}`);
                                         continue; // Ignorer les mods locaux qui ne sont plus sur le serveur
                                     }
-                                    
+
                                     const modPath = path.join(modsPath, modFile);
                                     const modNameLower = modFile.toLowerCase();
-                                    
+
                                     // Critères pour identifier les mods suspects :
                                     // 1. Nom contient "kotlin" (suspect évident)
                                     // 2. KubeJS (utilise JavaScript/Kotlin, très probable cause)
                                     // 3. Rhino (moteur JavaScript qui peut utiliser Kotlin Native)
                                     // 4. Autres mods de script/JS
                                     const isSuspect = modNameLower.includes('kotlin') ||
-                                                     modNameLower.includes('kubejs') || // KubeJS utilise JavaScript/Kotlin
-                                                     modNameLower.includes('rhino') || // Rhino peut utiliser Kotlin Native
-                                                     (modNameLower.includes('script') && modNameLower.includes('forge')) ||
-                                                     (modNameLower.includes('js') && modNameLower.includes('forge'));
-                                    
+                                        modNameLower.includes('kubejs') || // KubeJS utilise JavaScript/Kotlin
+                                        modNameLower.includes('rhino') || // Rhino peut utiliser Kotlin Native
+                                        (modNameLower.includes('script') && modNameLower.includes('forge')) ||
+                                        (modNameLower.includes('js') && modNameLower.includes('forge'));
+
                                     // Log pour debug
                                     if (isSuspect) {
                                         console.log(`[Minecraft] 🔍 Mod suspect identifié (présent sur serveur): ${modFile}`);
                                     }
-                                    
+
                                     if (isSuspect) {
                                         try {
                                             const stats = fs.statSync(modPath);
@@ -1199,11 +998,11 @@ class Home {
                                         }
                                     }
                                 }
-                                
+
                                 // Construire le message avec les mods suspects
                                 let suspectList = '';
                                 const hasKubeJS = suspectMods.some(m => m.name.toLowerCase().includes('kubejs'));
-                                
+
                                 if (suspectMods.length > 0) {
                                     suspectList = `\n\n🔍 Mods suspects identifiés (${suspectMods.length}) :\n`;
                                     suspectMods.forEach((mod, idx) => {
@@ -1211,28 +1010,28 @@ class Home {
                                         const marker = isKubeJS ? ' ⚠️ (TRÈS PROBABLE)' : '';
                                         suspectList += `   ${idx + 1}. ${mod.name} (${mod.size} MB)${marker}\n`;
                                     });
-                                    
+
                                     if (hasKubeJS) {
                                         suspectList += `\n⚠️ KubeJS détecté : Ce mod est TRÈS PROBABLEMENT la cause du problème.\n` +
-                                                     `   KubeJS utilise Kotlin Native et peut être incompatible avec Java 17.\n` +
-                                                     `   Solution : Mettez KubeJS à jour à la dernière version compatible avec 1.20.1.\n` +
-                                                     `   Ou retirez-le temporairement pour confirmer.`;
+                                            `   KubeJS utilise Kotlin Native et peut être incompatible avec Java 17.\n` +
+                                            `   Solution : Mettez KubeJS à jour à la dernière version compatible avec 1.20.1.\n` +
+                                            `   Ou retirez-le temporairement pour confirmer.`;
                                     } else {
                                         suspectList += `\n💡 Commencez par retirer ou mettre à jour ces mods un par un.`;
                                     }
                                 } else {
                                     suspectList = `\n\n⚠️ Aucun mod évident identifié, mais l'erreur persiste.\n` +
-                                                 `💡 Le mod problématique peut être une dépendance d'un autre mod.\n` +
-                                                 `   Vérifiez aussi les mods qui utilisent JavaScript ou des scripts.`;
+                                        `💡 Le mod problématique peut être une dépendance d'un autre mod.\n` +
+                                        `   Vérifiez aussi les mods qui utilisent JavaScript ou des scripts.`;
                                 }
-                                
+
                                 modsInfo = `\n\n📁 Mods installés (${modsFiles.length} fichiers) :\n${modsPath}` +
-                                          suspectList +
-                                          `\n\n💡 Instructions :\n` +
-                                          `1. Ouvrez le dossier des mods ci-dessus\n` +
-                                          `2. Retirez temporairement les mods suspects listés\n` +
-                                          `3. Testez le lancement après chaque retrait\n` +
-                                          `4. Si le problème persiste, vérifiez les dépendances des mods`;
+                                    suspectList +
+                                    `\n\n💡 Instructions :\n` +
+                                    `1. Ouvrez le dossier des mods ci-dessus\n` +
+                                    `2. Retirez temporairement les mods suspects listés\n` +
+                                    `3. Testez le lancement après chaque retrait\n` +
+                                    `4. Si le problème persiste, vérifiez les dépendances des mods`;
                             } catch (e) {
                                 console.error('[Minecraft] ❌ Erreur lors de l\'analyse des mods:', e);
                                 modsInfo = `\n\n📁 Dossier des mods : ${modsPath}\n\n⚠️ Erreur lors de l'analyse des mods: ${e.message}`;
@@ -1240,25 +1039,25 @@ class Home {
                         } else {
                             modsInfo = `\n\n📁 Dossier des mods : ${modsPath} (non trouvé)`;
                         }
-                        
+
                         try {
                             let popupError = new popup();
                             popupError.openPopup({
                                 title: '❌ Erreur de compatibilité Kotlin Native',
                                 content: 'Un mod dans votre pack utilise Kotlin Native avec un package nommé "kotlin.native.concurrent", qui est incompatible avec Java 17.\n\n' +
-                                        '🔧 Solutions possibles :\n\n' +
-                                        '1. Identifier et mettre à jour le mod problématique :\n' +
-                                        '   - Recherchez les mods avec "kotlin" dans le nom\n' +
-                                        '   - Vérifiez leurs versions et mettez-les à jour\n' +
-                                        '   - Les mods non mis à jour depuis longtemps sont souvent la cause\n\n' +
-                                        '2. Retirer temporairement le mod incompatible :\n' +
-                                        '   - Retirez les mods suspects un par un pour identifier le problème\n' +
-                                        '   - Testez après chaque retrait\n\n' +
-                                        '3. Utiliser Java 8 ou 11 (NON RECOMMANDÉ) :\n' +
-                                        '   - Minecraft 1.20.1 nécessite Java 17\n' +
-                                        '   - Cette solution peut causer d\'autres problèmes\n\n' +
-                                        modsInfo + '\n\n' +
-                                        '📋 L\'erreur complète est affichée dans la console (F12).',
+                                    '🔧 Solutions possibles :\n\n' +
+                                    '1. Identifier et mettre à jour le mod problématique :\n' +
+                                    '   - Recherchez les mods avec "kotlin" dans le nom\n' +
+                                    '   - Vérifiez leurs versions et mettez-les à jour\n' +
+                                    '   - Les mods non mis à jour depuis longtemps sont souvent la cause\n\n' +
+                                    '2. Retirer temporairement le mod incompatible :\n' +
+                                    '   - Retirez les mods suspects un par un pour identifier le problème\n' +
+                                    '   - Testez après chaque retrait\n\n' +
+                                    '3. Utiliser Java 8 ou 11 (NON RECOMMANDÉ) :\n' +
+                                    '   - Minecraft 1.20.1 nécessite Java 17\n' +
+                                    '   - Cette solution peut causer d\'autres problèmes\n\n' +
+                                    modsInfo + '\n\n' +
+                                    '📋 L\'erreur complète est affichée dans la console (F12).',
                                 color: 'red',
                                 options: true
                             });
@@ -1269,15 +1068,15 @@ class Home {
                     }, 2000);
                 }
             }
-            
+
             // Logger les erreurs importantes (en excluant les warnings OpenGL non critiques)
             // Les erreurs OpenGL sont souvent des warnings de rendu qui n'empêchent pas le jeu de fonctionner
-            const isOpenGLWarning = dataLower.includes('opengl') || 
-                                   dataLower.includes('gl_invalid') ||
-                                   dataLower.includes('gl error') ||
-                                   (dataLower.includes('invalid') && dataLower.includes('gl_'));
-            
-            if (!isOpenGLWarning && (dataLower.includes('error') || 
+            const isOpenGLWarning = dataLower.includes('opengl') ||
+                dataLower.includes('gl_invalid') ||
+                dataLower.includes('gl error') ||
+                (dataLower.includes('invalid') && dataLower.includes('gl_'));
+
+            if (!isOpenGLWarning && (dataLower.includes('error') ||
                 dataLower.includes('exception') ||
                 dataLower.includes('crash') ||
                 dataLower.includes('fatal') ||
@@ -1303,20 +1102,20 @@ class Home {
                 // Logger les warnings OpenGL à un niveau moins critique (info au lieu d'error)
                 console.log('[Minecraft] ℹ️ Avertissement OpenGL (non critique):', dataStr.substring(0, 200));
             }
-            
+
             // Ne traiter que la première fois
             if (dataEventCount === 1) {
                 progressBar.style.display = "none"
-                if(configClient.launcher_config.closeLauncher === 'close-launcher') {
+                if (configClient.launcher_config.closeLauncher === 'close-launcher') {
                     ipcRenderer.send("main-window-hide")
                 }
                 new logger('Minecraft', '#36b030');
                 ipcRenderer.send('main-window-progress-load')
                 infoStarting.innerHTML = `Lancement en cours...`
-                
+
                 console.log('[Home] ✅ Données de lancement reçues, Minecraft devrait démarrer...');
                 console.log('[Home] Processus détaché:', opt.detached ? 'Oui (reste ouvert)' : 'Non (attaché au launcher)');
-                
+
                 // Vérifier que les mods sont présents après téléchargement
                 const modsPath = path.join(instancePath, 'mods');
                 try {
@@ -1352,9 +1151,9 @@ class Home {
             // Le code peut être un nombre ou une string
             const codeStr = String(code);
             const codeNum = typeof code === 'number' ? code : (isNaN(parseInt(code)) ? null : parseInt(code));
-            
+
             console.log(`[Home] Jeu fermé - Code: ${codeStr} (type: ${typeof code})`);
-            
+
             // Afficher les sorties capturées si disponibles
             if (minecraftOutput.length > 0) {
                 console.log(`[Home] 📤 stdout capturé (${minecraftOutput.length} lignes, dernières 20):`);
@@ -1376,7 +1175,7 @@ class Home {
                     }
                 });
             }
-            
+
             // Afficher les dernières erreurs capturées si le jeu s'est fermé rapidement
             if (minecraftErrors.length > 0) {
                 console.error(`[Home] ⚠️ stderr capturé (${minecraftErrors.length} lignes):`);
@@ -1385,15 +1184,15 @@ class Home {
                     if (trimmed) console.error(`[Home] [stderr ${idx + 1}]`, trimmed.substring(0, 500));
                 });
             }
-            
+
             // Vérifier si c'est une fermeture normale ou une erreur
             // Code 0 ou "Minecraft closed" = fermeture normale
             // Code non-0 = erreur
-            const isNormalClose = codeNum === 0 || 
-                                 (typeof code === 'string' && code.toLowerCase().includes('closed'));
-            
+            const isNormalClose = codeNum === 0 ||
+                (typeof code === 'string' && code.toLowerCase().includes('closed'));
+
             const isError = codeNum !== null && codeNum !== 0 && !isNaN(codeNum);
-            
+
             if (isError) {
                 console.warn(`[Home] ⚠️ Le jeu s'est fermé avec une erreur (code: ${codeNum})`);
                 let errorMessage = `Le jeu s'est fermé avec le code d'erreur ${codeNum}.`;
@@ -1402,7 +1201,7 @@ class Home {
                     errorMessage += `\n\nDernière erreur: ${lastError.substring(0, 200)}`;
                 }
                 errorMessage += `\n\nVérifiez les logs Minecraft dans:\n${instancePath}\\logs\\latest.log`;
-                
+
                 let popupError = new popup();
                 popupError.openPopup({
                     title: 'Jeu fermé',
@@ -1415,7 +1214,7 @@ class Home {
                 // Pour un jeu avec beaucoup de mods, le chargement prend normalement 30-60 secondes minimum
                 const timeSinceLaunch = Date.now() - (window.gameLaunchTime || Date.now());
                 const timeInSeconds = Math.round(timeSinceLaunch / 1000);
-                
+
                 // Seuil suspect : moins de 30 secondes pour un jeu avec mods
                 if (timeInSeconds < 30) {
                     console.warn(`[Home] ⚠️ Le jeu s'est fermé rapidement (${timeInSeconds}s) - suspect pour un jeu avec mods`);
@@ -1425,16 +1224,16 @@ class Home {
                         if (fs.existsSync(logsPath)) {
                             const logContent = fs.readFileSync(logsPath, 'utf8');
                             console.log(`[Home] 📄 Fichier latest.log trouvé (${logContent.length} caractères)`);
-                            
+
                             if (logContent.trim().length === 0) {
                                 console.warn('[Home] ⚠️ Le fichier latest.log est vide - le jeu n\'a peut-être pas eu le temps d\'écrire les logs');
-                                
+
                                 // Vérifier s'il y a d'autres fichiers de log
                                 const logsDir = path.join(instancePath, 'logs');
                                 if (fs.existsSync(logsDir)) {
                                     const logFiles = fs.readdirSync(logsDir).filter(f => f.endsWith('.log'));
                                     console.log(`[Home] Fichiers de log disponibles: ${logFiles.join(', ')}`);
-                                    
+
                                     // Essayer de lire le dernier fichier de log (par date)
                                     if (logFiles.length > 0) {
                                         const logFilesWithStats = logFiles.map(f => {
@@ -1444,7 +1243,7 @@ class Home {
                                         });
                                         logFilesWithStats.sort((a, b) => b.mtime - a.mtime);
                                         const latestLogFile = logFilesWithStats[0];
-                                        
+
                                         if (latestLogFile.name !== 'latest.log') {
                                             console.log(`[Home] Lecture du fichier de log le plus récent: ${latestLogFile.name}`);
                                             const altLogContent = fs.readFileSync(latestLogFile.path, 'utf8');
@@ -1458,12 +1257,12 @@ class Home {
                                         }
                                     }
                                 }
-                                
+
                                 // Afficher la mémoire correctement
                                 const memoryMax = configClient.java_config?.java_memory?.max || 0;
                                 const memoryMaxMo = memoryMax * 1024;
                                 const memoryDisplay = memoryMaxMo >= 1024 ? `${memoryMax} Go (${memoryMaxMo} Mo)` : `${memoryMaxMo} Mo`;
-                                
+
                                 let popupError = new popup();
                                 popupError.openPopup({
                                     title: 'Jeu fermé rapidement',
@@ -1475,8 +1274,8 @@ class Home {
                                 const lines = logContent.split('\n').filter(l => l.trim());
                                 console.log(`[Home] 📄 ${lines.length} lignes dans latest.log`);
                                 const lastLines = lines.slice(-50); // Dernières 50 lignes non-vides
-                                const errorLines = lastLines.filter(line => 
-                                    line.toLowerCase().includes('error') || 
+                                const errorLines = lastLines.filter(line =>
+                                    line.toLowerCase().includes('error') ||
                                     line.toLowerCase().includes('exception') ||
                                     line.toLowerCase().includes('fatal') ||
                                     line.toLowerCase().includes('crash') ||
@@ -1484,14 +1283,14 @@ class Home {
                                     line.toLowerCase().includes('outofmemory') ||
                                     line.toLowerCase().includes('out of memory')
                                 );
-                                
+
                                 if (errorLines.length > 0) {
                                     console.error('[Home] ⚠️ Erreurs trouvées dans latest.log:');
                                     errorLines.slice(-5).forEach(err => {
                                         const cleanErr = err.trim();
                                         if (cleanErr) console.error('[Home]', cleanErr.substring(0, 300));
                                     });
-                                    
+
                                     // Afficher un popup avec les erreurs
                                     const lastError = errorLines[errorLines.length - 1].trim();
                                     let popupError = new popup();
@@ -1508,7 +1307,7 @@ class Home {
                                     console.log('[Home] 📄 Taille du fichier:', logContent.length, 'caractères');
                                     console.log('[Home] 📄 Nombre de lignes (avec vides):', logContent.split('\n').length);
                                     console.log('[Home] 📄 Nombre de lignes (sans vides):', lines.length);
-                                    
+
                                     if (lines.length > 0) {
                                         lines.forEach((line, idx) => {
                                             const trimmed = line.trim();
@@ -1518,28 +1317,28 @@ class Home {
                                                 console.log(`[Home] [${idx + 1}] (ligne vide ou seulement espaces)`);
                                             }
                                         });
-                                        
+
                                         // Analyser les lignes pour voir si ModLauncher a commencé à charger les mods
-                                        const modLoadingLines = lines.filter(line => 
+                                        const modLoadingLines = lines.filter(line =>
                                             line.toLowerCase().includes('mod') ||
                                             line.toLowerCase().includes('loading') ||
                                             line.toLowerCase().includes('scanning') ||
                                             line.toLowerCase().includes('preparing')
                                         );
-                                        
+
                                         if (modLoadingLines.length === 0 && lines.length <= 2) {
                                             console.error('[Home] ❌ ModLauncher a démarré mais n\'a pas commencé à charger les mods - crash très précoce');
                                             console.error('[Home] ❌ Causes possibles:');
                                             console.error('[Home] ❌   - Problème avec l\'accessToken (vérifiez qu\'il est valide côté serveur)');
                                             console.error('[Home] ❌   - Crash au démarrage de ModLauncher (vérifiez les crash reports)');
                                             console.error('[Home] ❌   - Problème de configuration Java/JVM');
-                                            
+
                                             // Afficher la mémoire configurée
                                             const memoryMax = configClient.java_config?.java_memory?.max || 0;
                                             const memoryMaxMo = memoryMax * 1024;
                                             const memoryDisplay = memoryMaxMo >= 1024 ? `${memoryMax} Go (${memoryMaxMo} Mo)` : `${memoryMaxMo} Mo`;
                                             console.error(`[Home] ❌   - Mémoire configurée: ${memoryDisplay}`);
-                                            
+
                                             // Vérifier si la mémoire est trop faible
                                             if (memoryMaxMo < 4096) {
                                                 console.error('[Home] ❌   - ATTENTION: Mémoire très faible pour 106 mods ! Minimum recommandé: 4-6 Go');
@@ -1552,17 +1351,17 @@ class Home {
                                         console.log('[Home]', JSON.stringify(logContent));
                                         console.log('[Home] Premiers 1000 caractères:', logContent.substring(0, 1000));
                                     }
-                                    
+
                                     // Vérifier s'il y a d'autres fichiers de log (crash reports, logs Java, etc.)
                                     const logsDir = path.join(instancePath, 'logs');
                                     const crashReportsDir = path.join(instancePath, 'crash-reports');
-                                    
+
                                     // Vérifier les logs Java (hs_err_pid*.log) - créés quand Java crash
                                     try {
                                         // Chercher dans le répertoire de l'instance
                                         const instanceFiles = fs.existsSync(instancePath) ? fs.readdirSync(instancePath) : [];
                                         const javaCrashLogs = instanceFiles.filter(f => f.startsWith('hs_err_pid') && f.endsWith('.log'));
-                                        
+
                                         // Chercher aussi dans le répertoire de travail (où le processus a été lancé)
                                         const workingDir = process.cwd();
                                         let workingDirFiles = [];
@@ -1572,7 +1371,7 @@ class Home {
                                             // Ignorer les erreurs
                                         }
                                         const javaCrashLogsWorking = workingDirFiles.filter(f => f.startsWith('hs_err_pid') && f.endsWith('.log'));
-                                        
+
                                         // Chercher aussi dans le répertoire temporaire Windows (où Java peut écrire les logs)
                                         const tempDir = os.tmpdir();
                                         let tempDirFiles = [];
@@ -1582,11 +1381,11 @@ class Home {
                                             // Ignorer les erreurs
                                         }
                                         const javaCrashLogsTemp = tempDirFiles.filter(f => f.startsWith('hs_err_pid') && f.endsWith('.log'));
-                                        
+
                                         const allJavaCrashLogs = [...javaCrashLogs, ...javaCrashLogsWorking, ...javaCrashLogsTemp];
-                                        
+
                                         console.log(`[Home] 🔍 Recherche logs Java: ${javaCrashLogs.length} dans instance, ${javaCrashLogsWorking.length} dans workingDir, ${javaCrashLogsTemp.length} dans tempDir`);
-                                        
+
                                         if (allJavaCrashLogs.length > 0) {
                                             console.error(`[Home] ⚠️ ${allJavaCrashLogs.length} log(s) de crash Java trouvé(s) !`);
                                             const latestJavaCrash = allJavaCrashLogs.sort().reverse()[0];
@@ -1598,19 +1397,19 @@ class Home {
                                             if (!fs.existsSync(javaCrashPath)) {
                                                 javaCrashPath = path.join(tempDir, latestJavaCrash);
                                             }
-                                            
+
                                             if (fs.existsSync(javaCrashPath)) {
                                                 console.error(`[Home] 📄 Dernier log de crash Java: ${latestJavaCrash}`);
                                                 console.error(`[Home] 📄 Chemin: ${javaCrashPath}`);
                                                 const javaCrashContent = fs.readFileSync(javaCrashPath, 'utf8');
                                                 const javaCrashLines = javaCrashContent.split('\n').filter(l => l.trim());
-                                                
+
                                                 // Chercher la cause du crash dans les premières lignes
                                                 console.error('[Home] Premières lignes du log de crash Java:');
                                                 javaCrashLines.slice(0, 50).forEach((line, idx) => {
                                                     console.error(`[Home] [${idx + 1}]`, line.substring(0, 300));
                                                 });
-                                                
+
                                                 // Chercher des indices sur la cause du crash
                                                 const javaCrashText = javaCrashContent.toLowerCase();
                                                 if (javaCrashText.includes('outofmemory') || javaCrashText.includes('java.lang.outofmemoryerror')) {
@@ -1634,7 +1433,7 @@ class Home {
                                         console.error('[Home] ❌ Erreur lors de la recherche des logs Java:', err.message);
                                         console.error('[Home] ❌ Stack:', err.stack);
                                     }
-                                    
+
                                     // Vérifier les crash reports Minecraft
                                     try {
                                         if (fs.existsSync(crashReportsDir)) {
@@ -1650,7 +1449,7 @@ class Home {
                                                 crashLines.slice(0, 50).forEach((line, idx) => {
                                                     console.error(`[Home] [${idx + 1}]`, line.substring(0, 300));
                                                 });
-                                                
+
                                                 // Chercher des indices sur la cause du crash
                                                 const crashText = crashContent.toLowerCase();
                                                 if (crashText.includes('outofmemory') || crashText.includes('java.lang.outofmemoryerror')) {
@@ -1671,19 +1470,19 @@ class Home {
                                     } catch (err) {
                                         console.error('[Home] ❌ Erreur lors de la lecture des crash reports:', err.message);
                                     }
-                                    
+
                                     // Diagnostic spécifique pour la migration 1.12.2 → 1.20.1
                                     console.error('[Home] 🔍 Diagnostic migration 1.12.2 → 1.20.1:');
                                     console.error('[Home] 🔍   - Version Java: Java 17 requise pour 1.20.1 (vs Java 8 pour 1.12.2)');
                                     console.error('[Home] 🔍   - Forge: Nouveau système ModLauncher (vs ancien système)');
                                     console.error('[Home] 🔍   - Mods: Vérifiez que tous les mods sont compatibles avec 1.20.1');
                                     console.error('[Home] 🔍   - Mémoire: 1.20.1 nécessite plus de mémoire que 1.12.2');
-                                    
+
                                     // Afficher la mémoire correctement (en Go si > 1024 Mo)
                                     const memoryMax = configClient.java_config?.java_memory?.max || 0;
                                     const memoryMaxMo = memoryMax * 1024; // Convertir Go en Mo
                                     const memoryDisplay = memoryMaxMo >= 1024 ? `${memoryMax} Go (${memoryMaxMo} Mo)` : `${memoryMaxMo} Mo`;
-                                    
+
                                     let popupError = new popup();
                                     popupError.openPopup({
                                         title: 'Jeu fermé rapidement',
@@ -1707,7 +1506,7 @@ class Home {
                         console.error('[Home] Impossible de lire latest.log:', logError);
                     }
                 } else {
-                    console.log(`[Home] ✅ Jeu fermé normalement après ${Math.round(timeSinceLaunch/1000)}s`);
+                    console.log(`[Home] ✅ Jeu fermé normalement après ${Math.round(timeSinceLaunch / 1000)}s`);
                 }
             } else {
                 console.log(`[Home] Jeu fermé (code: ${codeStr})`);
@@ -1723,8 +1522,8 @@ class Home {
                     });
                 }
             }
-            
-            if(configClient.launcher_config.closeLauncher === 'close-launcher') {
+
+            if (configClient.launcher_config.closeLauncher === 'close-launcher') {
                 ipcRenderer.send("main-window-show")
             }
             ipcRenderer.send('main-window-progress-reset')
@@ -1762,7 +1561,7 @@ class Home {
                 options: true
             })
 
-            if(configClient.launcher_config.closeLauncher === 'close-launcher') {
+            if (configClient.launcher_config.closeLauncher === 'close-launcher') {
                 ipcRenderer.send("main-window-show")
             }
             ipcRenderer.send('main-window-progress-reset')
