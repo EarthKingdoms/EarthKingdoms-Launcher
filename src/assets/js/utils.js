@@ -45,7 +45,7 @@ async function changePanel(id) {
         console.error(`[changePanel] Panneau .${id} introuvable dans le DOM`);
         return;
     }
-    
+
     let active = document.querySelector(`.active`);
 
     if (active && active !== panel) {
@@ -64,7 +64,7 @@ async function changePanel(id) {
         console.error(`[changePanel] Container introuvable dans le panneau .${id}`);
         return;
     }
-    
+
     panel.classList.add("active");
     panelContainer.style.visibility = "visible";
     panelContainer.style.opacity = 1;
@@ -84,20 +84,20 @@ async function addAccount(data) {
     if (!accountsList) {
         return { id: data.ID, skip: true };
     }
-    
+
     // Vérifier si le compte est déjà affiché dans la liste
     let existingElement = document.getElementById(data.ID);
-    if(existingElement) {
+    if (existingElement) {
         return existingElement; // Le compte est déjà affiché
     }
-    
+
     let skin = false;
-    
+
     // Gérer les skins pour les comptes EarthKingdoms (via API)
     if (data?.meta?.type === 'EarthKingdoms') {
         let skinUrl = null;
         let fallbackUrl = `https://earthkingdoms-mc.fr/skins/${data.name}.png`;
-        
+
         // Utiliser skin_url si disponible, sinon utiliser l'URL par pseudo
         if (data?.meta?.skin_url) {
             skinUrl = data.meta.skin_url;
@@ -111,11 +111,11 @@ async function addAccount(data) {
             // Fallback : utiliser l'URL par pseudo (format SkinRestorer)
             skinUrl = fallbackUrl;
         }
-        
+
         // Charger le skin avec un timeout pour éviter les blocages
         try {
             const skinPromise = new skin2D().creatHeadTexture(skinUrl);
-            const timeoutPromise = new Promise((_, reject) => 
+            const timeoutPromise = new Promise((_, reject) =>
                 setTimeout(() => reject(new Error('Timeout')), 3000)
             );
             skin = await Promise.race([skinPromise, timeoutPromise]);
@@ -124,7 +124,7 @@ async function addAccount(data) {
             if (data?.meta?.skin_url && skinUrl !== fallbackUrl) {
                 try {
                     const fallbackPromise = new skin2D().creatHeadTexture(fallbackUrl);
-                    const timeoutPromise = new Promise((_, reject) => 
+                    const timeoutPromise = new Promise((_, reject) =>
                         setTimeout(() => reject(new Error('Timeout')), 3000)
                     );
                     skin = await Promise.race([fallbackPromise, timeoutPromise]);
@@ -135,12 +135,12 @@ async function addAccount(data) {
                 skin = false;
             }
         }
-    } 
+    }
     // Gérer les skins pour les comptes Microsoft/Mojang (ancien système)
     else if (data?.profile?.skins[0]?.base64) {
         skin = await new skin2D().creatHeadTexture(data.profile.skins[0].base64);
     }
-    
+
     let div = document.createElement("div");
     div.classList.add("account");
     div.id = data.ID;
@@ -154,7 +154,7 @@ async function addAccount(data) {
             <div class="icon-account-delete delete-profile-icon"></div>
         </div>
     `
-    
+
     return accountsList.appendChild(div);
 }
 
@@ -163,21 +163,21 @@ async function accountSelect(data) {
         console.error('[accountSelect] Données invalides');
         return;
     }
-    
+
     let account = document.getElementById(`${data.ID}`);
     if (!account) {
         return;
     }
-    
+
     let activeAccount = document.querySelector('.account-select')
     if (activeAccount) activeAccount.classList.toggle('account-select');
     account.classList.add('account-select');
-    
+
     // Gérer les skins pour les comptes EarthKingdoms (via API)
     if (data?.meta?.type === 'EarthKingdoms') {
         let skinUrl = null;
         let fallbackUrl = `https://earthkingdoms-mc.fr/skins/${data.name}.png`;
-        
+
         // Utiliser skin_url si disponible, sinon utiliser l'URL par pseudo
         if (data?.meta?.skin_url) {
             skinUrl = data.meta.skin_url;
@@ -191,10 +191,10 @@ async function accountSelect(data) {
             // Fallback : utiliser l'URL par pseudo (format SkinRestorer)
             skinUrl = fallbackUrl;
         }
-        
+
         try {
             const headPromise = headplayer(skinUrl);
-            const timeoutPromise = new Promise((_, reject) => 
+            const timeoutPromise = new Promise((_, reject) =>
                 setTimeout(() => reject(new Error('Timeout')), 3000)
             );
             await Promise.race([headPromise, timeoutPromise]);
@@ -203,7 +203,7 @@ async function accountSelect(data) {
             if (data?.meta?.skin_url && skinUrl !== fallbackUrl) {
                 try {
                     const fallbackPromise = headplayer(fallbackUrl);
-                    const timeoutPromise = new Promise((_, reject) => 
+                    const timeoutPromise = new Promise((_, reject) =>
                         setTimeout(() => reject(new Error('Timeout')), 3000)
                     );
                     await Promise.race([fallbackPromise, timeoutPromise]);
@@ -248,14 +248,19 @@ async function headplayer(skinData) {
     }
 }
 
+let statusInterval = null;
+
 async function setStatus(opt) {
     let nameServerElement = document.querySelector('.server-status-name');
     let statusServerElement = document.querySelector('.server-status-text');
     let playersOnline = document.querySelector('.status-player-count .player-count');
     // Log réduit pour éviter le spam
 
+    // Arrêter l'intervalle précédent s'il existe
+    if (statusInterval) clearInterval(statusInterval);
+
     async function updateStatus() {
-        if(!opt) {
+        if (!opt) {
             statusServerElement.innerHTML = `Hors ligne - 0 ms`;
             playersOnline.innerHTML = '0';
             return;
@@ -263,13 +268,13 @@ async function setStatus(opt) {
 
         let { ip, port, nameServer } = opt;
         nameServerElement.innerHTML = nameServer;
-        
+
         // FORCER l'utilisation de earthkingdoms-mc.fr:25565 (ignorer l'IP/port de l'instance)
         const serverIp = 'earthkingdoms-mc.fr';
         const serverPort = 25565;
-        
+
         console.log(`[Status] Vérification serveur: ${serverIp}:${serverPort} (forcé, ignoré: ${ip}:${port})`);
-        
+
         let status = new Status(serverIp, serverPort);
         let statusServer = await status.getStatus().then(res => res).catch(err => {
             console.error(`[Status] Erreur détaillée:`, err);
@@ -278,7 +283,7 @@ async function setStatus(opt) {
             return { error: true, message: err?.message || err?.toString() || 'Erreur de connexion' };
         });
 
-        if(!statusServer.error) {
+        if (!statusServer.error) {
             statusServerElement.classList.remove('red');
             statusServerElement.classList.add('green');
             document.querySelector('.status-player-count').classList.remove('red');
@@ -297,9 +302,17 @@ async function setStatus(opt) {
     }
     await updateStatus();
 
-    setInterval(() => {
+    statusInterval = setInterval(() => {
         updateStatus();
     }, 15000);
+}
+
+function stopStatusCheck() {
+    if (statusInterval) {
+        clearInterval(statusInterval);
+        statusInterval = null;
+        console.log('[Status] Vérification du statut arrêtée');
+    }
 }
 
 
@@ -310,15 +323,15 @@ async function setStatus(opt) {
  */
 function generateDeterministicUUID(username) {
     const crypto = require('crypto');
-    
+
     // Utilise MD5 avec le préfixe "OfflinePlayer:" comme Java
     const data = Buffer.from('OfflinePlayer:' + username, 'utf8');
     const hash = crypto.createHash('md5').update(data).digest();
-    
+
     // Format en UUID v3 (même format que Java UUID.nameUUIDFromBytes)
     hash[6] = (hash[6] & 0x0f) | 0x30; // Version 3
     hash[8] = (hash[8] & 0x3f) | 0x80; // Variant
-    
+
     // Convertir en string UUID
     const hex = hash.toString('hex');
     return [
@@ -344,5 +357,6 @@ export {
     slider as Slider,
     pkg as pkg,
     setStatus as setStatus,
+    stopStatusCheck as stopStatusCheck,
     generateDeterministicUUID as generateDeterministicUUID
 }

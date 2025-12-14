@@ -1,0 +1,299 @@
+﻿<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta name="google-site-verification" content="-27V0rkqEGif7ll_Fm9-d3I78vbl-3810KiwLZ65GwE" />
+  <!-- Primary Meta Tags -->
+  <title>Actualités - EarthKingdoms</title>
+  <meta name="description" content="EarthKingdoms est un serveur Minecraft géopolitique moddé français en version 1.20.1. Créez votre nation, gérez vos alliances et participez à des conflits stratégiques sur une carte du monde réaliste. Serveur francophone gratuit avec modpack Forge !" />
+  <meta name="title" content="EarthKingdoms - Serveur Minecraft Géopolitique 1.20.1" />
+  <meta name="author" content="EarthKingdoms">
+  <meta name="keywords" content="serveur Minecraft géopolitique 1.20.1, serveur Minecraft moddé géopolitique français, EarthKingdoms serveur géopolitique, serveur Minecraft nations et diplomatie, serveur Minecraft géopolitique francophone, alternative NationsGlory 1.20.1, serveur Minecraft Earth map moddé, serveur Minecraft géopolitique RP, serveur Minecraft factions géopolitique, serveur Minecraft diplomatie et guerre, serveur Minecraft géopolitique Forge 1.20.1, serveur Minecraft modpack géopolitique français, serveur Minecraft géopolitique gratuit, serveur Minecraft géopolitique communautaire, Minecraft, Faction, RP, EarthKingdoms, EK, Serveur, Dynmap, Launcher, Mods, Moddé">
+  <meta name="robots" content="index, follow">
+  <meta property="og:type" content="website" />
+  
+  <!-- Open Graph / Facebook -->
+  <meta property="og:url" content="https://earthkingdoms.fr/" />
+  <meta property="og:title" content="EarthKingdoms - Serveur Minecraft Géopolitique 1.20.1" />
+  <meta property="og:description" content="EarthKingdoms est un serveur Minecraft géopolitique moddé français en version 1.20.1. Créez votre nation, gérez vos alliances et participez à des conflits stratégiques sur une carte du monde réaliste. Serveur francophone gratuit avec modpack Forge !" />
+  <meta property="og:image" content="https://metatags.io/images/meta-tags.png" />
+
+  <!-- Twitter -->
+  <meta property="twitter:card" content="summary_large_image" />
+  <meta property="twitter:url" content="https://earthkingdoms.fr/" />
+  <meta property="twitter:title" content="EarthKingdoms - Serveur Minecraft Géopolitique 1.20.1" />
+  <meta property="twitter:description" content="EarthKingdoms est un serveur Minecraft géopolitique moddé français en version 1.20.1. Créez votre nation, gérez vos alliances et participez à des conflits stratégiques. Serveur francophone gratuit avec modpack Forge !" />
+  <meta property="twitter:image" content="https://metatags.io/images/meta-tags.png" />
+  
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" href="/assets/img/eklogo.ico?dummy=371662">
+
+  <meta charset="UTF-8">
+  <link rel="stylesheet" href="/assets/css/style.css?1102608347">
+  <link rel="stylesheet" href="/assets/css/auth.css?605935790">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- Ping automatique des moteurs -->
+  <link rel="sitemap" type="application/xml" title="Sitemap" href="https://earthkingdoms.fr/sitemap.xml">
+</head>
+<body>
+  <div class="wrapper">
+
+    <header>
+      <nav>
+        <div class="logo">
+          <img src="/assets/img/eklogo.webp" alt="EarthKingdoms">
+          <span class="server-name">EarthKingdoms</span>
+        </div>
+        <ul>
+          <li><a href="/">Accueil</a></li>
+          <li><a href="/news">Actualités</a></li>
+          <li><a href="/downloads">Téléchargement</a></li>
+          <li><a href="/dynmap">Dynmap</a></li>
+          <li><a href="https://earthkingdoms.gitbook.io/earthkingdoms-wiki/" target="_blank">Wiki</a></li>
+          <li><a href="/npc-order">NPC</a></li>
+          <li><a href="/auth.php" id="navAccountLink">Compte</a></li>
+        </ul>
+        <div class="hamburger" id="hamburger">
+          <img src="/assets/img/hamburger.webp" alt="Menu">
+        </div>
+      </nav>
+    </header>
+
+    <script>
+      document.addEventListener("DOMContentLoaded", function () {
+        const hamburger = document.getElementById("hamburger");
+        const navMenu = document.querySelector("nav ul");
+        const accountLink = document.getElementById("navAccountLink");
+
+        if (hamburger && navMenu) {
+          hamburger.addEventListener("click", function () {
+            navMenu.classList.toggle("show");
+          });
+        }
+
+        // Afficher le pseudo dans le header si l'utilisateur est déjà connecté
+        if (accountLink && window.localStorage) {
+          try {
+            const storedUser = window.localStorage.getItem("user");
+            if (storedUser) {
+              const user = JSON.parse(storedUser);
+              if (user && user.pseudo) {
+                accountLink.textContent = user.pseudo;
+              }
+            }
+          } catch (e) {
+            // en cas d'erreur de parsing, on laisse "Compte"
+          }
+        }
+      });
+    </script>
+<link rel="stylesheet" href="/assets/css/news.css?v=1765670246_v7">
+<script src="/assets/js/load_more_articles.js" defer></script>
+
+<div class="wrapper" style="display: contents;">
+  <section class="news-section">
+    <h1 class="news-title">Dernières actualités</h1>
+
+    <div class="filter-buttons">
+      <a href="/news?filter=all" class="btn active">Tous</a>
+      <a href="/news?filter=communique" class="btn ">Communiqués</a>
+      <a href="/news?filter=patch-note" class="btn ">Patch Notes</a>
+      <!-- Bouton Admin (masqué par défaut) -->
+      <a href="/news/patch-note/editor/" id="adminCreateBtn" class="btn" style="display:none; border-color: #ff4444; color: #ff4444;">+ Créer Article</a>
+    </div>
+
+          <div class="news-grid" id="newsGrid">
+                  <a href="/news/patch-note/patch-note-4.8.0" class="news-card hidden-article" data-visible="false" style="display:none;">
+            <div class="news-content">
+                              <div class="news-img-wrapper">
+                    <img src="/assets/img/patch-note/pn4.8.0.webp" alt="TEST56">
+                </div>
+                            
+              <h2>TEST56</h2>
+              
+              <div class="news-meta">
+                                      <span class="date">14 Dec 2025</span>
+                                </div>
+              
+              <p></p>
+              
+              <!-- Debug info (hidden) -->
+              <span style="display:none;">DEBUG: patch-note-4.8.0 loaded.</span>
+            </div>
+          </a>
+                  <a href="/news/articles/anniversaire-5-ans" class="news-card " data-visible="true" style="">
+            <div class="news-content">
+                              <div class="news-img-wrapper">
+                    <img src="/assets/img/article/HB5.webp" alt="Joyeux Anniversaire, EarthKingdoms">
+                </div>
+                            
+              <h2>Joyeux Anniversaire, EarthKingdoms</h2>
+              
+              <div class="news-meta">
+                                      <span class="date">19 Oct 2025</span>
+                                </div>
+              
+              <p>Aujourd&#039;hui, en ce 19 octobre 2025, ce n’est pas un jour anodin. Nous fêtons les 5 ans de EarthKingdoms !</p>
+              
+              <!-- Debug info (hidden) -->
+              <span style="display:none;">DEBUG: anniversaire-5-ans loaded.</span>
+            </div>
+          </a>
+                  <a href="/news/articles/arrivee-du-dailyrewards" class="news-card " data-visible="true" style="">
+            <div class="news-content">
+                              <div class="news-img-wrapper">
+                    <img src="/assets/img/article/DR_minia.webp" alt="Arrivée du DailyRewards">
+                </div>
+                            
+              <h2>Arrivée du DailyRewards</h2>
+              
+              <div class="news-meta">
+                                      <span class="date">21 Sep 2025</span>
+                                </div>
+              
+              <p>Après plusieurs mois de reflexion, dites bienvenue au DailyRewards !</p>
+              
+              <!-- Debug info (hidden) -->
+              <span style="display:none;">DEBUG: arrivee-du-dailyrewards loaded.</span>
+            </div>
+          </a>
+                  <a href="/news/articles/ouverture-v3" class="news-card " data-visible="true" style="">
+            <div class="news-content">
+                              <div class="news-img-wrapper">
+                    <img src="/assets/img/background_light_4.webp" alt="Ouverture officielle de EarthKingdoms V3">
+                </div>
+                            
+              <h2>Ouverture officielle de EarthKingdoms V3</h2>
+              
+              <div class="news-meta">
+                                      <span class="date">27 Jul 2025</span>
+                                </div>
+              
+              <p>EarthKingdoms V3 ouvre officiellement ses portes après 7 mois de développement ! Découvrez toutes les nouveautés.</p>
+              
+              <!-- Debug info (hidden) -->
+              <span style="display:none;">DEBUG: ouverture-v3 loaded.</span>
+            </div>
+          </a>
+              </div>
+
+          
+  </section>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Vérification Admin pour le bouton Créer
+    try {
+        const userStr = localStorage.getItem('user');
+        if (userStr) {
+            const user = JSON.parse(userStr);
+            // Vérifie si l'utilisateur est admin (basé sur la logique de app.js)
+            if (user && (user.is_admin === true || user.is_admin === 1 || user.is_admin === 'true')) {
+                const btn = document.getElementById('adminCreateBtn');
+                if (btn) {
+                    btn.style.display = 'inline-block';
+                }
+                
+                // Show all edit buttons
+                document.querySelectorAll('.admin-edit-btn').forEach(b => {
+                    b.style.display = 'inline-block';
+                    // Modified to use a div with click handler to avoid nesting 'a' inside 'a' issues
+                    b.addEventListener('click', function(e) {
+                         e.preventDefault();
+                         e.stopPropagation();
+                         window.location.href = b.dataset.href;
+                    });
+                });
+
+                // Show hidden articles for admin
+                document.querySelectorAll('.news-card.hidden-article').forEach(card => {
+                    card.style.removeProperty('display'); // Revert display:none
+                    card.classList.remove('hidden-article'); // Remove the hiding class
+                    card.style.opacity = '0.6';
+                    card.style.border = '1px dashed #EC9600';
+                    
+                    const contentValues = card.querySelector('.news-content');
+                    if (contentValues) {
+                        contentValues.style.position = 'relative';
+                        const badge = document.createElement('span');
+                        badge.textContent = 'MASQUÉ';
+                        badge.style.cssText = 'position:absolute; top:10px; right:10px; background:red; color:white; padding:2px 6px; border-radius:4px; font-size:10px; font-weight:bold; z-index:20;';
+                        contentValues.appendChild(badge);
+                    }
+                });
+            }
+        }
+    } catch (e) {
+        console.error('Erreur vérification admin:', e);
+    }
+});
+</script>
+
+<!-- Footer EarthKingdoms -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+<style>
+/* Styles du footer */
+.footer {
+    background-color: #111;
+    text-align: center;
+    padding: 17px;
+    font-size: 14px;
+    margin-top: auto;
+    width: 100%;
+}
+
+.footer .container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 7px;
+}
+
+.social-links {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+}
+
+.social-links a {
+    color: white;
+    font-size: 24px;
+    text-decoration: none;
+    transition: transform 0.2s ease, color 0.2s ease;
+}
+
+.social-links a:hover {
+    transform: scale(1.2);
+}
+
+/* Couleurs spécifiques par réseau social */
+.social-links .fa-youtube:hover { color: #FF0000; }
+.social-links .fa-discord:hover { color: #5865F2; }
+.social-links .fa-twitter:hover { color: #1DA1F2; }
+.social-links .fa-tiktok:hover { color: #000000; }
+.social-links .fa-instagram:hover { color: #E4405F; }
+</style>
+
+<footer class="footer">
+    <div class="container">
+        <p>&copy; EarthKingdoms 2020-2025. Tous droits réservés.</p>
+        <div class="social-links">
+            <a href="https://www.youtube.com/@earthkingdomsmc" target="_blank" title="YouTube">
+                <i class="fab fa-youtube"></i>
+            </a>
+            <a href="https://discord.gg/earthkingdoms" target="_blank" title="Discord">
+                <i class="fab fa-discord"></i>
+            </a>
+            <a href="https://x.com/EarthKingdomsMC" target="_blank" title="Twitter/X">
+                <i class="fab fa-twitter"></i>
+            </a>
+            <a href="https://www.tiktok.com/@earthkingdomsm" target="_blank" title="TikTok">
+                <i class="fab fa-tiktok"></i>
+            </a>
+            <a href="https://www.instagram.com/earthkingdomsmc/" target="_blank" title="Instagram">
+                <i class="fab fa-instagram"></i>
+            </a>
+        </div>
+    </div>
+</footer>

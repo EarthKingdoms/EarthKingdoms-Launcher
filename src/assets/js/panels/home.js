@@ -3,7 +3,7 @@
  * @license CC-BY-NC 4.0 - https://creativecommons.org/licenses/by-nc/4.0
  */
 
-import { config, database, logger, changePanel, appdata, setStatus, pkg, popup } from '../utils.js'
+import { config, database, logger, changePanel, appdata, setStatus, stopStatusCheck, pkg, popup } from '../utils.js'
 import authAPI from '../utils/auth-api.js';
 
 //const crypto = require('crypto');
@@ -145,6 +145,15 @@ class Home {
                         let date = dateEl ? dateEl.textContent.trim() : '';
                         let desc = descEl ? descEl.textContent.trim() : '';
 
+                        // Filtrer les actualités masquées
+                        // On vérifie les classes et les styles car le texte "MASQUÉ" est ajouté en JS et n'est pas vu par le launcher
+                        if (card.classList.contains('hidden-article') ||
+                            card.style.display === 'none' ||
+                            card.getAttribute('data-visible') === 'false') {
+                            console.log(`[Home] News masquée filtrée (via classe/style): ${title}`);
+                            return;
+                        }
+
                         // URL Image
                         let imgSrc = 'assets/images/icon.png';
                         if (imgEl) {
@@ -173,6 +182,9 @@ class Home {
 
                         let newsCard = document.createElement('div');
                         newsCard.className = 'ek-news-card';
+                        if (!desc) {
+                            newsCard.classList.add('no-desc');
+                        }
                         newsCard.title = title;
                         newsCard.onclick = () => { const { shell } = require('electron'); shell.openExternal(linkUrl); };
 
@@ -828,6 +840,7 @@ class Home {
 
         try {
             launch.Launch(opt);
+            stopStatusCheck(); // Arrêter la vérification du statut du serveur
             console.log("[Home] ✅ Lancement initié avec succès");
             // Logs réduits pour les arguments JVM (peuvent être longs)
             if (opt.JVM_ARGS && opt.JVM_ARGS.length > 0) {

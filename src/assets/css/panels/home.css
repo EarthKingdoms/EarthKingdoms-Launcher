@@ -146,13 +146,18 @@
 .news-list {
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 15px;
+    /* Augmenter l'espacement entre les cartes */
     width: 100%;
     /* Limite la hauteur pour ne pas toucher le bas (bouton jouer) */
     max-height: 55vh;
     overflow-y: auto;
-    padding: 5px 10px 20px 0;
-    /* Padding en bas pour l'espace */
+    padding: 25px 10px 40px 10px;
+    /* Plus d'espace en haut et en bas */
+
+    /* Effet de flou vers le bas */
+    mask-image: linear-gradient(to bottom, black 70%, transparent 100%);
+    -webkit-mask-image: linear-gradient(to bottom, black 70%, transparent 100%);
 }
 
 /* Scrollbar invisible/fine pour un look clean */
@@ -177,30 +182,31 @@
 .ek-news-card {
     display: flex;
     flex-direction: row;
-    background: rgba(0, 0, 0, 0.4);
-    /* Fond sombre semi-transparent */
-    border: 1px solid rgba(255, 255, 255, 0.05);
-    /* Bordure subtile */
-    border-radius: 8px;
+    background: rgba(20, 20, 20, 0.8);
+    /* Fond plus sombre et opaque */
+    /* Bordure subtile mais définie */
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 12px;
+    /* Coins plus arrondis */
     overflow: hidden;
-    height: 85px;
-    /* Hauteur fixe */
-    min-height: 85px;
-    /* Empêche l'écrasement vertical */
+    height: 90px;
+    min-height: 90px;
     cursor: pointer;
     transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
     position: relative;
-    backdrop-filter: blur(5px);
-    /* Effet de flou arrière-plan (glassmorphism léger) */
+    backdrop-filter: blur(10px);
+
+    /* Ombre portée plus prononcée pour l'effet "encadré" */
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
 }
 
 /* Hover Effect */
 .ek-news-card:hover {
-    transform: translateX(5px);
-    background: rgba(255, 255, 255, 0.05);
-    /* L'éclaircit légèrement */
-    border-color: rgba(255, 255, 255, 0.2);
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+    transform: translateY(-2px) translateX(2px);
+    /* Léger mouvement diagonale */
+    background: rgba(40, 40, 40, 0.9);
+    border-color: rgba(255, 255, 255, 0.3);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.5);
 }
 
 /* Indicateur de hover sur la gauche */
@@ -210,7 +216,8 @@
     left: 0;
     top: 0;
     bottom: 0;
-    width: 3px;
+    width: 4px;
+    /* Un peu plus large */
     background: var(--primary);
     /* Utilise la couleur primaire du launcher */
     opacity: 0;
@@ -224,18 +231,14 @@
 
 /* Image (carré à gauche) */
 .ek-news-image {
-    width: 85px;
-    /* Largeur fixe */
-    height: 85px;
-    /* Hauteur fixe égale au conteneur */
+    width: 90px;
+    /* Ajusté à la hauteur */
+    height: 90px;
     background-size: cover;
-    /* Remplit sans déformer */
     background-position: center;
     background-repeat: no-repeat;
     flex-shrink: 0;
-    /* Empêche l'écrasement horizontal */
-    border-right: 1px solid rgba(255, 255, 255, 0.05);
-    /* Pas de masque */
+    border-right: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 /* Conteneur Info */
@@ -248,36 +251,59 @@
     overflow: hidden;
 }
 
+/* Style spécifique quand pas de description */
+.ek-news-card.no-desc .ek-news-info {
+    align-items: center;
+    /* Centrer horizontalement */
+}
+
 /* En-tête (Date au dessus ou à côté) */
 .ek-news-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    width: 100%;
     margin-bottom: 4px;
 }
 
+/* Si pas de description, la date est centrée sous le titre ou à côté selon design */
+/* Demande: date au milieu de toute la box */
+.ek-news-card.no-desc .ek-news-header {
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 0;
+    height: 100%;
+}
+
 .ek-news-title {
-    font-size: 0.95rem;
+    font-size: 1rem;
     font-family: 'Segoe UI', sans-serif;
-    /* Police système clean */
     font-weight: 700;
-    color: #eee;
-    /* Texte presque blanc */
+    color: #fff;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    max-width: 70%;
+    max-width: 100%;
+    /* Laisser prendre plus de place */
     letter-spacing: 0.3px;
+}
+
+/* Titre plus gros si pas de description */
+.ek-news-card.no-desc .ek-news-title {
+    font-size: 1.1rem;
+    max-width: 100%;
 }
 
 /* Date stylisée */
 .ek-news-date {
     font-size: 0.7rem;
-    color: rgba(255, 255, 255, 0.5);
+    color: rgba(255, 255, 255, 0.7);
     font-weight: 600;
     text-transform: uppercase;
-    background: rgba(255, 255, 255, 0.05);
-    padding: 2px 6px;
+    background: rgba(255, 255, 255, 0.1);
+    padding: 3px 8px;
     border-radius: 4px;
 }
 
@@ -285,7 +311,6 @@
 .ek-news-desc {
     font-size: 0.8rem;
     color: rgba(255, 255, 255, 0.7);
-    /* Gris clair */
     line-height: 1.3;
     font-weight: 400;
 
