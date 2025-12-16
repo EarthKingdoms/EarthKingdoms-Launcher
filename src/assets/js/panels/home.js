@@ -570,6 +570,29 @@ class Home {
                 jvmArgs.push(`-Dearthkingdoms.token=${token}`);
                 jvmArgs.push(`-Dearthkingdoms.api.url=${authAPI.apiBaseUrl}/auth/launcher`);
 
+                // CRÉATION DU FICHIER .ek_auth (Requis pour le mod Client)
+                try {
+                    const authData = {
+                        token: token,
+                        username: updatedAccount.meta.username || authenticator.name,
+                        expires: updatedAccount.token_expires
+                    };
+
+                    // Utiliser %APPDATA%\Roaming\.ek_auth pour fonctionner en dev ET en production
+                    const appDataPath = process.env.APPDATA || path.join(os.homedir(), 'AppData', 'Roaming');
+                    const authFilePath = path.join(appDataPath, '.ek_auth');
+
+
+
+
+                    fs.writeFileSync(authFilePath, JSON.stringify(authData, null, 2));
+                    console.log(`[Home] ✅ Fichier .ek_auth créé dans: ${authFilePath}`);
+
+                } catch (fileErr) {
+                    console.error('[Home] ❌ Erreur lors de la création du fichier .ek_auth:', fileErr);
+                    // On ne bloque pas le lancement pour ça, mais c'est risqué si le mod est strict
+                }
+
             } catch (err) {
                 console.error('[Home] ❌ Erreur Auth:', err.message);
                 let popupError = new popup();
