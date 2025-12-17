@@ -683,8 +683,40 @@ class Home {
         // Doit être fait après la définition de instancePath
         jvmArgs.push('-XX:+HeapDumpOnOutOfMemoryError');
         jvmArgs.push(`-XX:HeapDumpPath=${path.join(instancePath, 'heap_dump.hprof')}`);
-        jvmArgs.push('-XX:+ExitOnOutOfMemoryError');
         jvmArgs.push('-XX:+ShowCodeDetailsInExceptionMessages');
+
+        // Optimisations Java (G1GC) - Adaptative selon la RAM
+        const ramGB = configClient.java_config?.java_memory?.max || 4;
+        let initHeapOccupancy = 35;
+        let maxGCPause = 80;
+
+        if (ramGB >= 10) {
+            initHeapOccupancy = 50;
+            maxGCPause = 150;
+        } else if (ramGB >= 8) {
+            initHeapOccupancy = 45;
+            maxGCPause = 120;
+        } else if (ramGB >= 7) {
+            initHeapOccupancy = 40;
+            maxGCPause = 100;
+        }
+
+        console.log(`[Home] 🛠️ Optimisation G1GC Adaptative pour ${ramGB} Go: IHOP=${initHeapOccupancy}%, MaxPause=${maxGCPause}ms`);
+
+        jvmArgs.push('-XX:+UseG1GC');
+        jvmArgs.push('-XX:+ParallelRefProcEnabled');
+        jvmArgs.push(`-XX:MaxGCPauseMillis=${maxGCPause}`);
+        jvmArgs.push('-XX:G1HeapRegionSize=8M');
+        jvmArgs.push('-XX:G1NewSizePercent=30');
+        jvmArgs.push('-XX:G1MaxNewSizePercent=55');
+        jvmArgs.push('-XX:G1ReservePercent=25');
+        jvmArgs.push(`-XX:InitiatingHeapOccupancyPercent=${initHeapOccupancy}`);
+        jvmArgs.push('-XX:+DisableExplicitGC');
+        jvmArgs.push('-XX:+AlwaysPreTouch');
+        jvmArgs.push('-XX:-UseBiasedLocking');
+        jvmArgs.push('-XX:+UnlockExperimentalVMOptions');
+        jvmArgs.push('-XX:G1MixedGCCountTarget=1');
+        jvmArgs.push('-XX:G1HeapWastePercent=5');
 
         // Résoudre le problème Kotlin Native avec Java 17
         // Java 17 bloque les packages avec "native" dans le nom (mot réservé)
@@ -818,8 +850,8 @@ class Home {
 
             memory: {
                 // La mémoire est stockée en Go dans la config, convertir en Mo pour Java
-                // Si max est 16, cela signifie 16 Go = 16384 Mo
-                min: `${configClient.java_config.java_memory.min * 1024}M`,
+                // Adaptation: Xms = Xmx - 0.5Go (pour éviter les reallocations et stabiliser le G1GC)
+                min: `${(configClient.java_config.java_memory.max - 0.5) * 1024}M`,
                 max: `${configClient.java_config.java_memory.max * 1024}M`
             }
         }
