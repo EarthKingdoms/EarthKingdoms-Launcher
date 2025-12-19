@@ -22,7 +22,7 @@
         "ignore": "**/test"
     },
     "build": {
-        "appId": "com.earthkingdoms.launcher",
+        "appId": "EarthKingdoms Launcher",
         "productName": "EarthKingdoms Launcher"
     },
     "dependencies": {

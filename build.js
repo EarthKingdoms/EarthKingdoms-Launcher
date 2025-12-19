@@ -1,4 +1,5 @@
 const fs = require("fs");
+const os = require("os");
 
 const builder = require('electron-builder')
 const JavaScriptObfuscator = require('javascript-obfuscator');
@@ -64,7 +65,7 @@ class Index {
         const platform = os.platform();
         const config = {
             generateUpdatesFilesForAllChannels: false,
-            appId: "com.earthkingdoms.launcher",
+            appId: "EarthKingdoms Launcher",
             productName: productName,
             copyright: '© 2025 EarthKingdoms',
             artifactName: "${productName}-${os}-${arch}.${ext}",
