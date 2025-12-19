@@ -685,38 +685,28 @@ class Home {
         jvmArgs.push(`-XX:HeapDumpPath=${path.join(instancePath, 'heap_dump.hprof')}`);
         jvmArgs.push('-XX:+ShowCodeDetailsInExceptionMessages');
 
-        // Optimisations Java (G1GC) - Adaptative selon la RAM
-        const ramGB = configClient.java_config?.java_memory?.max || 4;
-        let initHeapOccupancy = 35;
-        let maxGCPause = 80;
-
-        if (ramGB >= 10) {
-            initHeapOccupancy = 50;
-            maxGCPause = 150;
-        } else if (ramGB >= 8) {
-            initHeapOccupancy = 45;
-            maxGCPause = 120;
-        } else if (ramGB >= 7) {
-            initHeapOccupancy = 40;
-            maxGCPause = 100;
-        }
-
-        console.log(`[Home] 🛠️ Optimisation G1GC Adaptative pour ${ramGB} Go: IHOP=${initHeapOccupancy}%, MaxPause=${maxGCPause}ms`);
-
+        // Optimisations Java (G1GC) - Profil Équilibré (Aikar's Flags)
+        // Adapté pour une charge modérée (RAM ~60%) sans forcer le GC trop agressivement
         jvmArgs.push('-XX:+UseG1GC');
         jvmArgs.push('-XX:+ParallelRefProcEnabled');
-        jvmArgs.push(`-XX:MaxGCPauseMillis=${maxGCPause}`);
-        jvmArgs.push('-XX:G1HeapRegionSize=8M');
-        jvmArgs.push('-XX:G1NewSizePercent=30');
-        jvmArgs.push('-XX:G1MaxNewSizePercent=55');
-        jvmArgs.push('-XX:G1ReservePercent=25');
-        jvmArgs.push(`-XX:InitiatingHeapOccupancyPercent=${initHeapOccupancy}`);
+        jvmArgs.push('-XX:MaxGCPauseMillis=200'); // Standard pour éviter les micro-lags
+        jvmArgs.push('-XX:+UnlockExperimentalVMOptions');
         jvmArgs.push('-XX:+DisableExplicitGC');
         jvmArgs.push('-XX:+AlwaysPreTouch');
-        jvmArgs.push('-XX:-UseBiasedLocking');
-        jvmArgs.push('-XX:+UnlockExperimentalVMOptions');
-        jvmArgs.push('-XX:G1MixedGCCountTarget=1');
+        jvmArgs.push('-XX:G1NewSizePercent=30');
+        jvmArgs.push('-XX:G1MaxNewSizePercent=40');
+        jvmArgs.push('-XX:G1HeapRegionSize=8M');
+        jvmArgs.push('-XX:G1ReservePercent=20');
         jvmArgs.push('-XX:G1HeapWastePercent=5');
+        jvmArgs.push('-XX:G1MixedGCCountTarget=4'); // Valeur standard (moins agressive que 1)
+        jvmArgs.push('-XX:InitiatingHeapOccupancyPercent=15'); // Démarrer le marquage tôt pour lisser la charge
+        jvmArgs.push('-XX:G1MixedGCLiveThresholdPercent=90');
+        jvmArgs.push('-XX:G1RSetUpdatingPauseTimePercent=5');
+        jvmArgs.push('-XX:SurvivorRatio=32');
+        jvmArgs.push('-XX:+PerfDisableSharedMem');
+        jvmArgs.push('-XX:MaxTenuringThreshold=1');
+
+        console.log('[Home] 🛠️ Optimisation G1GC: Profil Équilibré (Aikar Lite) appliqué');
 
         // Résoudre le problème Kotlin Native avec Java 17
         // Java 17 bloque les packages avec "native" dans le nom (mot réservé)

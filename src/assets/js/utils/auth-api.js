@@ -86,8 +86,14 @@ class AuthAPI {
                 account.token_expires = tokenExpires;
                 updated = true;
             } else {
+                // Si le serveur nous dit explicitement que le token est invalide, on ne doit PAS continuer
+                if (refreshResult.tokenInvalid) {
+                    console.error('[AuthAPI] ❌ Le serveur a rejeté le token lors du rafraîchissement préventif (Invalide/Expiré).');
+                    throw new Error("Session expirée ou invalide. Veuillez vous reconnecter.");
+                }
+
                 console.warn('[AuthAPI] ⚠️ Échec du rafraîchissement préventif. Continuation avec le token actuel.');
-                // On continue avec le token actuel car il est encore valide
+                // On continue avec le token actuel car il est encore (théoriquement) valide selon l'horloge locale
             }
         }
 
@@ -498,10 +504,15 @@ class AuthAPI {
                 const errorMsg = data.error || data.message || 'Erreur lors du rafraîchissement du token';
                 console.error('[AuthAPI] Erreur lors du rafraîchissement:', errorMsg);
                 console.error('[AuthAPI] Détails réponse:', { status: response.status, data: data });
+
+                const isTokenInvalid = response.status === 401 || response.status === 403 ||
+                    (errorMsg && (errorMsg.toLowerCase().includes('expired') || errorMsg.toLowerCase().includes('invalid')));
+
                 return {
                     error: true,
                     success: false,
-                    errorMessage: errorMsg
+                    errorMessage: errorMsg,
+                    tokenInvalid: isTokenInvalid
                 };
             }
 
