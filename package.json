@@ -1,6 +1,6 @@
 {
-    "name": "EarthKingdoms-Launcher",
-    "preductname": "EarthKingdoms Launcher",
+    "name": "earthkingdoms-launcher",
+    "productName": "EarthKingdoms Launcher",
     "version": "2.2.0",
     "description": "Launcher Minecraft pour le serveur EarthKingdoms",
     "main": "src/app.js",
@@ -13,13 +13,17 @@
     "scripts": {
         "start": "cross-env-shell NODE_ENV=dev electron .",
         "dev": "cross-env-shell DEV_TOOL=open nodemon --exec npm start",
-        "build": "node build.js --obf=true --build=platform",
+        "build": "cross-env ELECTRON_BUILDER_ALLOW_HANDLE_SYMLINK_AS_FILE=true node build.js --obf=true --build=platform",
         "icon": "node build.js --icon=https://raw.githubusercontent.com/EarthKingdoms/EarthKingdoms-Launcher/master/src/assets/images/icon.png"
     },
     "license": "CCANC",
     "nodemonConfig": {
         "ext": "js,html,css",
         "ignore": "**/test"
+    },
+    "build": {
+        "appId": "com.earthkingdoms.launcher",
+        "productName": "EarthKingdoms Launcher"
     },
     "dependencies": {
         "electron-updater": "^6.6.2",
@@ -30,7 +34,7 @@
     },
     "devDependencies": {
         "cross-env": "^10.1.0",
-        "electron": "^39.2.4",
+        "electron": "32.0.0",
         "electron-builder": "^26.0.12",
         "javascript-obfuscator": "^4.1.1",
         "jimp": "^1.6.0",

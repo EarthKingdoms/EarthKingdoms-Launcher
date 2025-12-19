@@ -6,43 +6,44 @@ const nodeFetch = require('node-fetch')
 const png2icons = require('png2icons');
 const { Jimp, JimpMime } = require('jimp');
 
-const { preductname } = require('./package.json');
+const { productName } = require('./package.json');
 
 class Index {
     async init() {
+        process.env.ELECTRON_BUILDER_ALLOW_HANDLE_SYMLINK_AS_FILE = "true";
         this.obf = true
         this.Fileslist = []
         for (const val of process.argv) {
-            if(val.startsWith('--icon')) {
+            if (val.startsWith('--icon')) {
                 await this.iconSet(val.split('=')[1]);
             }
 
-            if(val.startsWith('--obf')) {
+            if (val.startsWith('--obf')) {
                 this.obf = JSON.parse(val.split('=')[1])
                 this.Fileslist = this.getFiles("src");
             }
 
-            if(val.startsWith('--build')) {
+            if (val.startsWith('--build')) {
                 let buildType = val.split('=')[1]
-                if(buildType === 'platform') await this.buildPlatform();
+                if (buildType === 'platform') await this.buildPlatform();
             }
         }
     }
 
     async Obfuscate() {
-        if(fs.existsSync("./app")) fs.rmSync("./app", { recursive: true })
+        if (fs.existsSync("./app")) fs.rmSync("./app", { recursive: true })
 
-        for(let path of this.Fileslist) {
+        for (let path of this.Fileslist) {
             let fileName = path.split('/').pop()
             let extFile = fileName.split(".").pop()
             let folder = path.replace(`/${fileName}`, '').replace('src', 'app')
 
-            if(!fs.existsSync(folder)) fs.mkdirSync(folder, { recursive: true })
+            if (!fs.existsSync(folder)) fs.mkdirSync(folder, { recursive: true })
 
-            if(extFile === 'js') {
+            if (extFile === 'js') {
                 let code = fs.readFileSync(path, "utf8");
                 code = code.replace(/src\//g, 'app/');
-                if(this.obf) {
+                if (this.obf) {
                     await new Promise((resolve) => {
                         console.log(`Obfuscate ${path}`);
                         let obf = JavaScriptObfuscator.obfuscate(code, { optionsPreset: 'medium-obfuscation', disableConsoleOutput: false });
@@ -60,76 +61,58 @@ class Index {
 
     async buildPlatform() {
         await this.Obfuscate();
+        const platform = os.platform();
+        const config = {
+            generateUpdatesFilesForAllChannels: false,
+            appId: "com.earthkingdoms.launcher",
+            productName: productName,
+            copyright: '© 2025 EarthKingdoms',
+            artifactName: "${productName}-${os}-${arch}.${ext}",
+            extraMetadata: { main: 'app/app.js' },
+            files: ["app/**/*", "package.json", "LICENSE.md"],
+            directories: {
+                "output": "dist"
+            },
+            compression: 'normal',
+            asar: true,
+            electronDownload: {
+                cache: "./node_modules/.cache/electron"
+            },
+            nodeGypRebuild: false,
+            npmRebuild: true,
+            publish: [{
+                provider: "github",
+                releaseType: 'release',
+            }]
+        };
+
+        if (platform === 'win32') {
+            config.win = {
+                icon: "./app/assets/images/icon.ico",
+                target: [{ target: "nsis", arch: "x64" }]
+            };
+            config.nsis = {
+                oneClick: true,
+                allowToChangeInstallationDirectory: false,
+                createDesktopShortcut: true,
+                runAfterFinish: true
+            };
+        } else if (platform === 'darwin') {
+            config.mac = {
+                icon: "./app/assets/images/icon.icns",
+                category: "public.app-category.games",
+                target: [{ target: "dmg", arch: "universal" }, { target: "zip", arch: "universal" }]
+            };
+        } else {
+            config.linux = {
+                icon: "./app/assets/images/icon.png",
+                target: [{ target: "AppImage", arch: "x64" }]
+            };
+        }
+
         builder.build({
-            config: {
-                generateUpdatesFilesForAllChannels: false,
-                appId: preductname,
-                productName: preductname,
-                copyright: '© 2025 EarthKingdoms',
-                artifactName: "${productName}-${os}-${arch}.${ext}",
-                extraMetadata: { main: 'app/app.js' },
-                files: ["app/**/*", "package.json", "LICENSE.md"],
-                directories: {
-                    "output": "dist"
-                },
-                compression: 'normal',
-                asar: true,
-                electronDownload: {
-                    cache: "./node_modules/.cache/electron"
-                },
-                nodeGypRebuild: false,
-                npmRebuild: true,
-                publish: [{
-                    provider: "github",
-                    releaseType: 'release',
-                }],
-                win: {
-                    icon: "./app/assets/images/icon.ico",
-                    target: [{
-                        target: "nsis",
-                        arch: "x64"
-                    }]
-                },
-                nsis: {
-                    oneClick: true,
-                    allowToChangeInstallationDirectory: false,
-                    createDesktopShortcut: true,
-                    runAfterFinish: true
-                },
-                mac: {
-                    icon: "./app/assets/images/icon.icns",
-                    category: "public.app-category.games",
-                    identity: null,
-                    hardenedRuntime: false,
-                    gatekeeperAssess: false,
-                    mergeASARs: true,
-                    singleArchFiles: "node_modules/sqlite3/**/*",
-                    target: [{
-                        target: "dmg",
-                        arch: "universal"
-                    },
-                    {
-                        target: "zip",
-                        arch: "universal"
-                    }]
-                },
-                dmg: {
-                    sign: false,
-                    contents: [
-                        { x: 130, y: 220 },
-                        { x: 410, y: 220, type: 'link', path: '/Applications' }
-                    ],
-                    artifactName: "${productName}-mac-${arch}.${ext}",
-                    format: "ULFO"
-                },
-                linux: {
-                    icon: "./app/assets/images/icon.png",
-                    target: [{
-                        target: "AppImage",
-                        arch: "x64"
-                    }]
-                }
-            }
+            targets: platform === 'win32' ? builder.Platform.WINDOWS.createTarget() : (platform === 'darwin' ? builder.Platform.MAC.createTarget() : builder.Platform.LINUX.createTarget()),
+            config: config
         }).then(() => {
             console.log('Build done !')
         }).catch(err => {
@@ -138,10 +121,10 @@ class Index {
     }
 
     getFiles(path, file = []) {
-        if(fs.existsSync(path)) {
+        if (fs.existsSync(path)) {
             let files = fs.readdirSync(path);
-            if(files.length === 0) file.push(path);
-            for(let i in files) {
+            if (files.length === 0) file.push(path);
+            for (let i in files) {
                 let name = `${path}/${files[i]}`;
                 if (fs.statSync(name).isDirectory()) this.getFiles(name, file);
                 else file.push(name);

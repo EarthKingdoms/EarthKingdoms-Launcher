@@ -15,7 +15,7 @@ function getWindow() {
 }
 
 function destroyWindow() {
-    if(!mainWindow) return;
+    if (!mainWindow) return;
     app.quit();
     mainWindow = undefined;
 }
@@ -23,7 +23,7 @@ function destroyWindow() {
 function createWindow() {
     destroyWindow();
     mainWindow = new BrowserWindow({
-        title: pkg.preductname,
+        title: pkg.productName,
         width: 1280,
         height: 720,
         minWidth: 1280,
@@ -41,8 +41,8 @@ function createWindow() {
     mainWindow.setMenuBarVisibility(false);
     mainWindow.loadFile(path.join(`${app.getAppPath()}/src/launcher.html`));
     mainWindow.once('ready-to-show', () => {
-        if(mainWindow) {
-            if(dev) mainWindow.webContents.openDevTools({ mode: 'detach' })
+        if (mainWindow) {
+            if (dev) mainWindow.webContents.openDevTools({ mode: 'detach' })
             mainWindow.show()
         }
     });
