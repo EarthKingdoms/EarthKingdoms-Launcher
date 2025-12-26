@@ -22,9 +22,8 @@ class database {
         }
         
         const userDataPath = await ipcRenderer.invoke('path-user-data');
-        // Utiliser EXACTEMENT la même logique que la version 2.1.6 (concaténation de chaîne)
-        // node-bdd semble préférer cette approche
-        const dbPath = `${userDataPath}${dev ? '../..' : '/databases'}`;
+        // Utiliser path.join pour une meilleure compatibilité cross-platform
+        const dbPath = dev ? path.join(userDataPath, '..', '..') : path.join(userDataPath, 'databases');
         
         const table = await nodedatabase.intilize({
             databaseName: 'Databases',

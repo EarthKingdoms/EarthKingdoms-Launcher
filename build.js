@@ -68,7 +68,9 @@ class Index {
             appId: "EarthKingdoms Launcher",
             productName: productName,
             copyright: '© 2025 EarthKingdoms',
-            artifactName: "${productName}-${os}-${arch}.${ext}",
+            // Remplacer les espaces par des tirets pour correspondre au format dans latest.yml
+            // latest.yml référence "EarthKingdoms-Launcher-win-x64.exe" (avec des tirets)
+            artifactName: productName.replace(/\s+/g, '-') + "-${os}-${arch}.${ext}",
             extraMetadata: { main: 'app/app.js' },
             files: ["app/**/*", "package.json", "LICENSE.md"],
             directories: {
@@ -96,7 +98,9 @@ class Index {
                 oneClick: true,
                 allowToChangeInstallationDirectory: false,
                 createDesktopShortcut: true,
-                runAfterFinish: true
+                runAfterFinish: true,
+                // S'assurer que le nom du fichier généré correspond au format dans latest.yml
+                artifactName: productName.replace(/\s+/g, '-') + "-${os}-${arch}.${ext}"
             };
         } else if (platform === 'darwin') {
             config.mac = {

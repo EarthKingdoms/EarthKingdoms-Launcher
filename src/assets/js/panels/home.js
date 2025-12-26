@@ -580,8 +580,8 @@ class Home {
                         expires: updatedAccount.token_expires
                     };
 
-                    // Utiliser %APPDATA%\Roaming\.ek_auth pour fonctionner en dev ET en production
-                    const appDataPath = process.env.APPDATA || path.join(os.homedir(), 'AppData', 'Roaming');
+                    // Utiliser le chemin appData cross-platform via IPC
+                    const appDataPath = await ipcRenderer.invoke('app-data-path');
                     const authFilePath = path.join(appDataPath, '.ek_auth');
 
 
@@ -1348,7 +1348,8 @@ class Home {
                     const lastError = minecraftErrors[minecraftErrors.length - 1];
                     errorMessage += `\n\nDernière erreur: ${lastError.substring(0, 200)}`;
                 }
-                errorMessage += `\n\nVérifiez les logs Minecraft dans:\n${instancePath}\\logs\\latest.log`;
+                const logPath = path.join(instancePath, 'logs', 'latest.log');
+                errorMessage += `\n\nVérifiez les logs Minecraft dans:\n${logPath}`;
 
                 let popupError = new popup();
                 popupError.openPopup({
@@ -1664,7 +1665,7 @@ class Home {
                     let popupError = new popup();
                     popupError.openPopup({
                         title: 'Jeu fermé rapidement',
-                        content: `Le jeu s'est fermé immédiatement après le lancement. Vérifiez les logs Minecraft dans:\n${instancePath}\\logs\\latest.log\n\nErreurs capturées: ${minecraftErrors.length}`,
+                        content: `Le jeu s'est fermé immédiatement après le lancement. Vérifiez les logs Minecraft dans:\n${path.join(instancePath, 'logs', 'latest.log')}\n\nErreurs capturées: ${minecraftErrors.length}`,
                         color: 'orange',
                         options: true
                     });

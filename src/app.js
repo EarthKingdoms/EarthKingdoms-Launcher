@@ -57,6 +57,7 @@ ipcMain.on('restart-app', () => { app.relaunch(); app.exit(0); });
 
 ipcMain.handle('path-user-data', () => app.getPath('userData'))
 ipcMain.handle('appData', e => app.getPath('appData'))
+ipcMain.handle('app-data-path', () => app.getPath('appData'))
 
 ipcMain.on('main-window-maximize', () => {
     if(MainWindow.getWindow().isMaximized()) {
