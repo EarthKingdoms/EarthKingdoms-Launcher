@@ -113,16 +113,13 @@ jobs:
           ls -la dist/ || echo "Dossier dist/ non trouvé"
         shell: bash
       
-      - name: Upload artifacts to release
+      - name: Upload artifacts to release (Windows only)
+        if: matrix.os == 'windows-latest' && startsWith(github.ref, 'refs/heads/')
         uses: softprops/action-gh-release@v1
-        if: startsWith(github.ref, 'refs/heads/')
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           files: |
-            dist/*.dmg
-            dist/*.zip
-            dist/*.AppImage
             dist/*.exe
             dist/*.blockmap
             dist/*.yml
