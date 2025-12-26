@@ -28,7 +28,8 @@ class Config {
         const urlInstance = `${url}/launcher/files/?instance=null`;
         
         try {
-            console.log(`[Config] Récupération des instances depuis: ${urlInstance}`);
+            // Log réduit - seulement en cas d'erreur
+            // console.log(`[Config] Récupération des instances depuis: ${urlInstance}`);
             const response = await nodeFetch(urlInstance);
             
             // Vérifier que la réponse est OK et que c'est du JSON
@@ -44,7 +45,8 @@ class Config {
             }
             
             const instances = await response.json();
-            console.log(`[Config] Données reçues de l'API:`, instances);
+            // Log réduit - seulement en cas d'erreur
+            // console.log(`[Config] Données reçues de l'API:`, instances);
             
             // L'API PHP peut retourner soit un objet, soit un tableau
             let instancesList = [];
@@ -78,7 +80,8 @@ class Config {
                 return [];
             }
             
-            console.log(`[Config] ${instancesList.length} instance(s) trouvée(s)`);
+            // Log réduit
+            // console.log(`[Config] ${instancesList.length} instance(s) trouvée(s)`);
             return instancesList;
         } catch (error) {
             console.error(`[Config] Erreur lors de la récupération des instances:`, error);

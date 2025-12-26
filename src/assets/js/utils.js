@@ -273,7 +273,8 @@ async function setStatus(opt) {
         const serverIp = 'earthkingdoms-mc.fr';
         const serverPort = 25565;
 
-        console.log(`[Status] Vérification serveur: ${serverIp}:${serverPort} (forcé, ignoré: ${ip}:${port})`);
+        // Log réduit - seulement en cas d'erreur
+        // console.log(`[Status] Vérification serveur: ${serverIp}:${serverPort} (forcé, ignoré: ${ip}:${port})`);
 
         let status = new Status(serverIp, serverPort);
         let statusServer = await status.getStatus().then(res => res).catch(err => {

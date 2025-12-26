@@ -1,7 +1,7 @@
 {
     "name": "earthkingdoms-launcher",
     "productName": "EarthKingdoms Launcher",
-    "version": "2.2.1",
+    "version": "2.2.2",
     "description": "Launcher Minecraft pour le serveur EarthKingdoms",
     "main": "src/app.js",
     "author": {
@@ -14,6 +14,7 @@
         "start": "cross-env-shell NODE_ENV=dev electron .",
         "dev": "cross-env-shell DEV_TOOL=open nodemon --exec npm start",
         "build": "cross-env ELECTRON_BUILDER_ALLOW_HANDLE_SYMLINK_AS_FILE=true node build.js --obf=true --build=platform",
+        "build:test": "cross-env SKIP_UPDATE_CHECK=true ELECTRON_BUILDER_ALLOW_HANDLE_SYMLINK_AS_FILE=true node build.js --obf=true --build=platform",
         "icon": "node build.js --icon=https://raw.githubusercontent.com/EarthKingdoms/EarthKingdoms-Launcher/master/src/assets/images/icon.png"
     },
     "license": "CCANC",
@@ -22,10 +23,21 @@
         "ignore": "**/test"
     },
     "build": {
-        "appId": "EarthKingdoms Launcher",
-        "productName": "EarthKingdoms Launcher"
+        "appId": "com.earthkingdoms.launcher",
+        "productName": "EarthKingdoms Launcher",
+        "linux": {
+            "target": ["AppImage"],
+            "category": "Game",
+            "desktop": {}
+        },
+        "mac": {
+            "category": "public.app-category.games",
+            "hardenedRuntime": false,
+            "gatekeeperAssess": false
+        }
     },
     "dependencies": {
+        "better-sqlite3": "^12.5.0",
         "electron-updater": "^6.6.2",
         "minecraft-java-core": "^4.2.3",
         "node-bdd": "^2.0.4",
@@ -34,8 +46,9 @@
     },
     "devDependencies": {
         "cross-env": "^10.1.0",
-        "electron": "32.0.0",
+        "electron": "^30.5.1",
         "electron-builder": "^26.0.12",
+        "electron-rebuild": "^3.2.9",
         "javascript-obfuscator": "^4.1.1",
         "jimp": "^1.6.0",
         "nodemon": "^3.1.11",

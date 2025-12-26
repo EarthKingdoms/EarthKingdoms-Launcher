@@ -102,7 +102,8 @@ class Home {
                 // Petite correction pour les liens/images relatifs si besoin
                 // (Supprimé car géré plus bas dans la boucle principale)
 
-                console.log('[Home] Structure détectée: .news-grid avec .news-card');
+                // Log réduit
+                // console.log('[Home] Structure détectée: .news-grid avec .news-card');
 
                 // Nouvelle logique basée sur le debug HTML réel
                 // Structure: <a class="news-card"> <img ...> <div class="news-content"> <h2>...</h2> <p class="date">...</p> <p>desc</p> </div> </a>
@@ -150,7 +151,8 @@ class Home {
                         if (card.classList.contains('hidden-article') ||
                             card.style.display === 'none' ||
                             card.getAttribute('data-visible') === 'false') {
-                            console.log(`[Home] News masquée filtrée (via classe/style): ${title}`);
+                            // Log réduit
+                            // console.log(`[Home] News masquée filtrée (via classe/style): ${title}`);
                             return;
                         }
 

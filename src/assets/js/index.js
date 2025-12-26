@@ -10,6 +10,7 @@ import { config, database } from './utils.js';
 const nodeFetch = require("node-fetch");
 
 
+
 class Splash {
     constructor() {
         this.splash = document.querySelector(".splash");
@@ -24,7 +25,7 @@ class Splash {
             let theme = configClient?.launcher_config?.theme || "auto"
             let isDarkTheme = await ipcRenderer.invoke('is-dark-theme', theme).then(res => res)
             document.body.className = isDarkTheme ? 'dark global' : 'light global';
-            if(process.platform === 'win32') ipcRenderer.send('update-window-progress-load')
+            if (process.platform === 'win32') ipcRenderer.send('update-window-progress-load')
             await this.startAnimation()
         });
     }
@@ -51,15 +52,58 @@ class Splash {
     }
 
     async checkUpdate() {
+        // En mode dev, passer directement à la vérification de maintenance
+        if (process.env.NODE_ENV === 'dev') {
+            console.log('[Update] Mode dev - Ignorer la vérification de mise à jour');
+            return this.maintenanceCheck();
+        }
+        
+        // Variable pour éviter les appels multiples à maintenanceCheck
+        let maintenanceCalled = false;
+        const callMaintenanceOnce = () => {
+            if (!maintenanceCalled) {
+                maintenanceCalled = true;
+                this.maintenanceCheck();
+            }
+        };
+        
         this.setStatus(`Recherche de mise à jour...`);
 
-        ipcRenderer.invoke('update-app').then().catch(err => {
-            return this.shutdown(`Erreur lors de la recherche de mise à jour : <br>${err.message}`);
+        ipcRenderer.invoke('update-app').then((result) => {
+            // Si updateInfo est null, c'est que la vérification a été désactivée (build local/test)
+            if (result && result.updateInfo === null) {
+                console.log('[Update] Vérification désactivée - Passage à la vérification de maintenance');
+                callMaintenanceOnce();
+                return;
+            }
+            // Si result est null ou undefined, continuer aussi
+            if (!result) {
+                console.log('[Update] Pas de résultat - Passage à la vérification de maintenance');
+                callMaintenanceOnce();
+                return;
+            }
+        }).catch(err => {
+            // En cas d'erreur, continuer quand même (ne pas bloquer le launcher)
+            console.warn('[Update] Erreur lors de la vérification de mise à jour:', err);
+            callMaintenanceOnce();
         });
 
         ipcRenderer.on('updateAvailable', () => {
+            // Pour les builds de test, ne pas télécharger automatiquement
+            const isLocalBuild = window.location && (
+                window.location.href.includes('file://') || 
+                window.location.pathname.includes('dist') ||
+                window.location.pathname.includes('build')
+            );
+            
+            if (isLocalBuild) {
+                console.log('[Update] Build local - Mise à jour disponible mais ignorée pour les tests');
+                callMaintenanceOnce();
+                return;
+            }
+            
             this.setStatus(`Mise à jour disponible !`);
-            if(os.platform() === 'win32') {
+            if (os.platform() === 'win32') {
                 this.toggleProgress();
                 ipcRenderer.send('start-update');
             }
@@ -67,7 +111,7 @@ class Splash {
         })
 
         ipcRenderer.on('error', (event, err) => {
-            if(err) return this.shutdown(`${err.message}`);
+            if (err) return this.shutdown(`${err.message}`);
         })
 
         ipcRenderer.on('download-progress', (event, progress) => {
@@ -76,8 +120,8 @@ class Splash {
         })
 
         ipcRenderer.on('update-not-available', () => {
-            console.error("Mise à jour non disponible");
-            this.maintenanceCheck();
+            console.log('[Update] Mise à jour non disponible - Passage à la vérification de maintenance');
+            callMaintenanceOnce();
         })
     }
 
@@ -101,8 +145,8 @@ class Splash {
         const latestRelease = releases_url[0].assets;
         let latest;
 
-        if(os.platform() === 'darwin') latest = this.getLatestReleaseForOS('mac', '.dmg', latestRelease);
-        else if(os === 'linux') latest = this.getLatestReleaseForOS('linux', '.appimage', latestRelease);
+        if (os.platform() === 'darwin') latest = this.getLatestReleaseForOS('mac', '.dmg', latestRelease);
+        else if (os === 'linux') latest = this.getLatestReleaseForOS('linux', '.appimage', latestRelease);
 
 
         this.setStatus(`Mise à jour disponible !<br><div class="download-update">Télécharger</div>`);
@@ -114,12 +158,22 @@ class Splash {
 
 
     async maintenanceCheck() {
-        config.GetConfig().then(res => {
+        // Ajouter un timeout pour éviter que le launcher reste bloqué
+        const timeoutPromise = new Promise((_, reject) => {
+            setTimeout(() => reject(new Error('Timeout')), 8000);
+        });
+
+        Promise.race([
+            config.GetConfig(),
+            timeoutPromise
+        ]).then(res => {
             if (res.maintenance) return this.shutdown(res.maintenance_message);
             this.startLauncher();
         }).catch(e => {
-            console.error(e);
-            return this.shutdown("Aucune connexion internet détectée,<br>veuillez réessayer ultérieurement.");
+            // En cas d'erreur ou timeout, continuer quand même (ne pas bloquer le launcher)
+            console.warn('[Maintenance] Erreur ou timeout lors de la vérification de maintenance:', e.message || e.error?.message || 'Erreur inconnue');
+            console.log('[Maintenance] Continuation du démarrage malgré l\'erreur');
+            this.startLauncher();
         })
     }
 
@@ -134,7 +188,7 @@ class Splash {
         let i = 4;
         setInterval(() => {
             this.setStatus(`${text}<br>Arrêt dans ${i--}s`);
-            if(i < 0) ipcRenderer.send('update-window-close');
+            if (i < 0) ipcRenderer.send('update-window-close');
         }, 1000);
     }
 
@@ -143,7 +197,7 @@ class Splash {
     }
 
     toggleProgress() {
-        if(this.progress.classList.toggle("show")) this.setProgress(0, 1);
+        if (this.progress.classList.toggle("show")) this.setProgress(0, 1);
     }
 
     setProgress(value, max) {

@@ -89,7 +89,6 @@ class Login {
                         color: 'var(--dark)'
                     });
 
-                    // Appeler l'API backend (route launcher)
                     const result = await authAPI.login(emailInput.value, passwordInput.value);
 
                     if (result.error) {
@@ -171,10 +170,31 @@ class Login {
                         }
 
                         console.log('[Login] ✅ Connexion réussie pour:', result.username);
+                        console.log('[Login] 📦 Données du compte préparées:', {
+                            name: accountData.name,
+                            uuid: accountData.uuid,
+                            hasToken: !!accountData.access_token,
+                            tokenLength: accountData.access_token?.length || 0
+                        });
 
                         // Sauvegarder le token launcher (valable 12 heures)
-                        await this.saveData(accountData);
+                        console.log('[Login] 💾 Appel de saveData...');
+                        try {
+                            await this.saveData(accountData);
+                            console.log('[Login] ✅ saveData terminé avec succès');
+                        } catch (saveError) {
+                            console.error('[Login] ❌ ERREUR lors de saveData:', saveError);
+                            console.error('[Login] ❌ Stack trace:', saveError.stack);
+                            popupLogin.openPopup({
+                                title: 'Erreur',
+                                content: 'Erreur lors de la sauvegarde du compte. Veuillez réessayer.',
+                                color: 'red',
+                                options: true
+                            });
+                            return;
+                        }
                         popupLogin.closePopup();
+                        console.log('[Login] ✅ Processus de connexion terminé');
                     }
                 });
             }
@@ -308,9 +328,31 @@ class Login {
                         }
 
                         console.log('[Login] ✅ Connexion réussie pour:', result.username);
+                        console.log('[Login] 📦 Données du compte préparées:', {
+                            name: accountData.name,
+                            uuid: accountData.uuid,
+                            hasToken: !!accountData.access_token,
+                            tokenLength: accountData.access_token?.length || 0
+                        });
 
-                        await this.saveData(accountData);
+                        // Sauvegarder le token launcher (valable 12 heures)
+                        console.log('[Login] 💾 Appel de saveData...');
+                        try {
+                            await this.saveData(accountData);
+                            console.log('[Login] ✅ saveData terminé avec succès');
+                        } catch (saveError) {
+                            console.error('[Login] ❌ ERREUR lors de saveData:', saveError);
+                            console.error('[Login] ❌ Stack trace:', saveError.stack);
+                            popupLogin.openPopup({
+                                title: 'Erreur',
+                                content: 'Erreur lors de la sauvegarde du compte. Veuillez réessayer.',
+                                color: 'red',
+                                options: true
+                            });
+                            return;
+                        }
                         popupLogin.closePopup();
+                        console.log('[Login] ✅ Processus de connexion terminé');
                     }
                 });
             }
@@ -321,23 +363,13 @@ class Login {
     // Ces méthodes sont bloquées pour forcer l'authentification via la base de données
 
     async saveData(connectionData) {
+        console.log('[Login] 💾 Sauvegarde compte:', connectionData.name);
         let configClient = await this.db.readData('configClient');
-
-        // Vérifier s'il existe déjà un compte avec ce nom (pour éviter les doublons)
         let existingAccounts = await this.db.readAllData('accounts');
         let existingAccount = existingAccounts.find(acc => acc.name === connectionData.name);
 
         if (existingAccount) {
-            // Utiliser directement le compte existant (même UUID, même stuff)
-            let popupInfo = new popup();
-            popupInfo.openPopup({
-                title: 'Compte existant',
-                content: `Le compte "${connectionData.name}" existe déjà. Utilisation du compte existant pour préserver votre inventaire.`,
-                color: 'green',
-                background: false
-            });
-
-            // Sélectionner le compte existant sans le recréer
+            console.log('[Login] ✅ Compte existant (ID:', existingAccount.ID, ')');
             configClient.account_selected = existingAccount.ID;
             await this.db.updateData('configClient', configClient);
             await addAccount(existingAccount);
@@ -346,6 +378,7 @@ class Login {
             return;
         }
 
+        console.log('[Login] ➕ Nouveau compte');
         let account = await this.db.createData('accounts', connectionData)
         let instanceSelect = configClient.instance_select
         let instancesList = await config.getInstanceList()
@@ -367,8 +400,8 @@ class Login {
         await this.db.updateData('configClient', configClient);
         await addAccount(account);
         await accountSelect(account);
-
         await changePanel('home');
+        console.log('[Login] ✅ Compte sauvegardé');
     }
 }
 

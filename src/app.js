@@ -9,24 +9,31 @@ const { autoUpdater } = require('electron-updater')
 
 const path = require('path');
 const fs = require('fs');
+const pkg = require('../package.json');
 
 const UpdateWindow = require("./assets/js/windows/updateWindow.js");
 const MainWindow = require("./assets/js/windows/mainWindow.js");
 
 let dev = process.env.NODE_ENV === 'dev';
 
-if (dev) {
+// IMPORTANT: Définir le nom de l'application AVANT toute utilisation des chemins
+// Cela évite que les fichiers se sauvegardent dans .undefined
+const appName = (pkg.productName || pkg.name || 'EarthKingdoms-Launcher').replace(/\s+/g, '-');
+app.setName(appName);
+console.log(`[App] Nom de l'application défini: ${app.getName()}`);
+
+if(dev) {
     let appPath = path.resolve('./data/Launcher').replace(/\\/g, '/');
     let appdata = path.resolve('./data').replace(/\\/g, '/');
-    if (!fs.existsSync(appPath)) fs.mkdirSync(appPath, { recursive: true });
-    if (!fs.existsSync(appdata)) fs.mkdirSync(appdata, { recursive: true });
+    if(!fs.existsSync(appPath)) fs.mkdirSync(appPath, { recursive: true });
+    if(!fs.existsSync(appdata)) fs.mkdirSync(appdata, { recursive: true });
     app.setPath('userData', appPath);
     app.setPath('appData', appdata)
 }
 
-if (!app.requestSingleInstanceLock()) app.quit();
+if(!app.requestSingleInstanceLock()) app.quit();
 else app.whenReady().then(() => {
-    if (dev) return MainWindow.createWindow()
+    if(dev) return MainWindow.createWindow()
     UpdateWindow.createWindow()
 });
 
@@ -52,7 +59,7 @@ ipcMain.handle('path-user-data', () => app.getPath('userData'))
 ipcMain.handle('appData', e => app.getPath('appData'))
 
 ipcMain.on('main-window-maximize', () => {
-    if (MainWindow.getWindow().isMaximized()) {
+    if(MainWindow.getWindow().isMaximized()) {
         MainWindow.getWindow().unmaximize();
     } else {
         MainWindow.getWindow().maximize();
@@ -67,31 +74,49 @@ ipcMain.handle('Microsoft-window', async (_, client_id) => {
 })
 
 ipcMain.handle('is-dark-theme', (_, theme) => {
-    if (theme === 'dark') return true
-    if (theme === 'light') return false
+    if(theme === 'dark') return true
+    if(theme === 'light') return false
     return nativeTheme.shouldUseDarkColors;
 })
 
 app.on('window-all-closed', () => app.quit());
 
-autoUpdater.logger = console;
 autoUpdater.autoDownload = false;
 
-console.log('App version:', app.getVersion());
-
 ipcMain.handle('update-app', async () => {
-    try {
-        const res = await autoUpdater.checkForUpdates();
-        return res;
-    } catch (error) {
-        console.error('Update check error:', error);
-        throw new Error(error.message || error.toString() || 'Unknown update error');
+    // Désactiver la vérification de mise à jour en mode dev
+    if (dev) {
+        console.log('[Update] Mode dev - Vérification de mise à jour désactivée');
+        return { updateInfo: null };
     }
+    
+    // Désactiver aussi si SKIP_UPDATE_CHECK est défini (pour les builds de test)
+    if (process.env.SKIP_UPDATE_CHECK === 'true') {
+        console.log('[Update] SKIP_UPDATE_CHECK activé - Vérification désactivée pour les tests');
+        return { updateInfo: null };
+    }
+    
+    // Détecter si on est dans un build local (dossier dist)
+    const appPath = app.getAppPath();
+    if (appPath.includes('dist') || appPath.includes('\\dist\\') || appPath.includes('/dist/')) {
+        console.log('[Update] Build local détecté (dossier dist) - Vérification désactivée pour les tests');
+        return { updateInfo: null };
+    }
+    
+    return await new Promise(async (resolve, reject) => {
+        autoUpdater.checkForUpdates().then(res => {
+            resolve(res);
+        }).catch(error => {
+            // En cas d'erreur, ne pas bloquer le launcher, retourner null pour continuer
+            console.warn('[Update] Erreur ignorée, continuation du démarrage');
+            resolve({ updateInfo: null });
+        })
+    })
 })
 
 autoUpdater.on('update-available', () => {
     const updateWindow = UpdateWindow.getWindow();
-    if (updateWindow) updateWindow.webContents.send('updateAvailable');
+    if(updateWindow) updateWindow.webContents.send('updateAvailable');
 });
 
 ipcMain.on('start-update', () => {
@@ -100,7 +125,7 @@ ipcMain.on('start-update', () => {
 
 autoUpdater.on('update-not-available', () => {
     const updateWindow = UpdateWindow.getWindow();
-    if (updateWindow) updateWindow.webContents.send('update-not-available');
+    if(updateWindow) updateWindow.webContents.send('update-not-available');
 });
 
 autoUpdater.on('update-downloaded', () => {
@@ -109,10 +134,10 @@ autoUpdater.on('update-downloaded', () => {
 
 autoUpdater.on('download-progress', (progress) => {
     const updateWindow = UpdateWindow.getWindow();
-    if (updateWindow) updateWindow.webContents.send('download-progress', progress);
+    if(updateWindow) updateWindow.webContents.send('download-progress', progress);
 })
 
 autoUpdater.on('error', (err) => {
     const updateWindow = UpdateWindow.getWindow();
-    if (updateWindow) updateWindow.webContents.send('error', err);
+    if(updateWindow) updateWindow.webContents.send('error', err);
 });

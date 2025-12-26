@@ -13,6 +13,8 @@ import authAPI from './utils/auth-api.js';
 const { ipcRenderer } = require('electron');
 const fs = require('fs');
 const os = require('os');
+const path = require('path');
+
 
 // Polyfill fetch pour minecraft-java-core si nécessaire
 if (typeof globalThis.fetch === 'undefined') {
@@ -111,10 +113,11 @@ class Launcher {
     }
 
     async initConfigClient() {
-        console.log('Initializing Config Client...')
+        console.log('[Launcher] Initializing Config Client...')
         let configClient = await this.db.readData('configClient')
 
         if (!configClient) {
+            console.log('[Launcher] ⚠️ Aucune config client trouvée, création d\'une nouvelle config par défaut');
             await this.db.createData('configClient', {
                 account_selected: null,
                 instance_select: null,
@@ -155,9 +158,17 @@ class Launcher {
     }
 
     async startLauncher() {
+        console.log('[Launcher] 🔍 Lecture des comptes...');
         let accounts = await this.db.readAllData('accounts')
         let configClient = await this.db.readData('configClient')
         let account_selected = configClient ? configClient.account_selected : null
+        
+        if (accounts.length === 0) {
+            console.log('[Launcher] ⚠️ Aucun compte trouvé');
+        } else {
+            console.log(`[Launcher] ✅ ${accounts.length} compte(s) trouvé(s)`);
+        }
+        
         let popupRefresh = new popup();
 
         if (accounts?.length) {
