@@ -9,11 +9,25 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
 
       - name: Get version
         run: echo "version=$(jq -r .version package.json)" >> $GITHUB_ENV
       
+      - name: Check if tag exists
+        id: check_tag
+        run: |
+          if git rev-parse "${{ env.version }}" >/dev/null 2>&1; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+            echo "Tag ${{ env.version }} already exists, will use existing release"
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+            echo "Tag ${{ env.version }} does not exist, will create new release"
+          fi
+      
       - name: Create Release
+        if: steps.check_tag.outputs.exists == 'false'
         id: create_release
         uses: actions/create-release@v1
         env:
@@ -23,6 +37,40 @@ jobs:
           release_name: release ${{ env.version }}
           draft: false
           prerelease: ${{ contains(env.version, 'beta') || contains(env.version, 'alpha') }}
+      
+      - name: Get existing release ID
+        if: steps.check_tag.outputs.exists == 'true'
+        id: get_release
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const { data: releases } = await github.rest.repos.listReleases({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+            });
+            const release = releases.find(r => r.tag_name === '${{ env.version }}');
+            if (release) {
+              core.setOutput('id', release.id.toString());
+              core.setOutput('upload_url', release.upload_url);
+            } else {
+              // Si le tag existe mais pas la release, on crée la release
+              const { data: newRelease } = await github.rest.repos.createRelease({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                tag_name: '${{ env.version }}',
+                name: 'release ${{ env.version }}',
+                draft: false,
+                prerelease: ${{ contains(env.version, 'beta') || contains(env.version, 'alpha') }}
+              });
+              core.setOutput('id', newRelease.id.toString());
+              core.setOutput('upload_url', newRelease.upload_url);
+            }
+      
+      - name: Set release outputs for existing release
+        if: steps.check_tag.outputs.exists == 'true'
+        run: |
+          echo "release_id=${{ steps.get_release.outputs.id }}" >> $GITHUB_ENV
+          echo "upload_url=${{ steps.get_release.outputs.upload_url }}" >> $GITHUB_ENV
 
   build-launcher:
     needs: create-release
