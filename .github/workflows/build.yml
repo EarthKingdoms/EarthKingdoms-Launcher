@@ -172,6 +172,15 @@ jobs:
             
             console.log(`Upload vers release ID: ${releaseId}`);
             
+            // Récupérer tous les assets existants une seule fois
+            const { data: existingAssets } = await github.rest.repos.listReleaseAssets({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              release_id: parseInt(releaseId),
+            });
+            
+            console.log(`Assets existants: ${existingAssets.length}`);
+            
             for (const fileName of filesToUpload) {
               const filePath = path.join(distDir, fileName);
               if (fs.existsSync(filePath)) {
@@ -180,6 +189,25 @@ jobs:
                 
                 console.log(`📤 Upload de ${fileName} (${(fileSize / 1024 / 1024).toFixed(2)} MB)...`);
                 
+                // Vérifier si le fichier existe déjà et le supprimer
+                const existingAsset = existingAssets.find(a => a.name === fileName);
+                if (existingAsset) {
+                  console.log(`🗑️ Suppression de l'ancien ${fileName} (ID: ${existingAsset.id})...`);
+                  try {
+                    await github.rest.repos.deleteReleaseAsset({
+                      owner: context.repo.owner,
+                      repo: context.repo.repo,
+                      asset_id: existingAsset.id,
+                    });
+                    console.log(`✅ Ancien ${fileName} supprimé`);
+                    // Attendre un peu pour que la suppression soit effective
+                    await new Promise(resolve => setTimeout(resolve, 1000));
+                  } catch (deleteError) {
+                    console.log(`⚠️ Erreur lors de la suppression: ${deleteError.message}`);
+                  }
+                }
+                
+                // Upload du nouveau fichier
                 try {
                   await github.rest.repos.uploadReleaseAsset({
                     owner: context.repo.owner,
@@ -197,37 +225,40 @@ jobs:
                   
                   console.log(`✅ ${fileName} uploadé avec succès`);
                 } catch (error) {
-                  if (error.status === 422 && error.message.includes('already exists')) {
-                    console.log(`⚠️ ${fileName} existe déjà, remplacement...`);
-                    // Récupérer les assets existants et supprimer l'ancien
+                  if (error.status === 422 && (error.message.includes('already exists') || error.message.includes('Validation Failed'))) {
+                    console.log(`⚠️ ${fileName} existe toujours, nouvelle tentative après délai...`);
+                    // Attendre plus longtemps et réessayer
+                    await new Promise(resolve => setTimeout(resolve, 2000));
+                    // Supprimer à nouveau
                     const { data: assets } = await github.rest.repos.listReleaseAssets({
                       owner: context.repo.owner,
                       repo: context.repo.repo,
                       release_id: parseInt(releaseId),
                     });
-                    const existingAsset = assets.find(a => a.name === fileName);
-                    if (existingAsset) {
+                    const asset = assets.find(a => a.name === fileName);
+                    if (asset) {
                       await github.rest.repos.deleteReleaseAsset({
                         owner: context.repo.owner,
                         repo: context.repo.repo,
-                        asset_id: existingAsset.id,
+                        asset_id: asset.id,
                       });
-                      // Réessayer l'upload
-                      await github.rest.repos.uploadReleaseAsset({
-                        owner: context.repo.owner,
-                        repo: context.repo.repo,
-                        release_id: parseInt(releaseId),
-                        name: fileName,
-                        data: fileContent,
-                        headers: {
-                          'content-type': fileName.endsWith('.exe') ? 'application/octet-stream' : 
-                                         fileName.endsWith('.yml') ? 'text/yaml' : 
-                                         'application/octet-stream',
-                          'content-length': fileSize
-                        }
-                      });
-                      console.log(`✅ ${fileName} remplacé avec succès`);
+                      await new Promise(resolve => setTimeout(resolve, 1000));
                     }
+                    // Réessayer l'upload
+                    await github.rest.repos.uploadReleaseAsset({
+                      owner: context.repo.owner,
+                      repo: context.repo.repo,
+                      release_id: parseInt(releaseId),
+                      name: fileName,
+                      data: fileContent,
+                      headers: {
+                        'content-type': fileName.endsWith('.exe') ? 'application/octet-stream' : 
+                                       fileName.endsWith('.yml') ? 'text/yaml' : 
+                                       'application/octet-stream',
+                        'content-length': fileSize
+                      }
+                    });
+                    console.log(`✅ ${fileName} remplacé avec succès`);
                   } else {
                     throw error;
                   }
