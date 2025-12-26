@@ -84,6 +84,9 @@ jobs:
       - name: Check out Git repository
         uses: actions/checkout@v1
 
+      - name: Get version
+        run: echo "version=$(jq -r .version package.json)" >> $GITHUB_ENV
+
       - name: Set up Node
         uses: actions/setup-node@v3
         with:
@@ -103,3 +106,20 @@ jobs:
           GH_TOKEN: ${{ secrets.github_token }}
         run: npm run build
         shell: bash
+      
+      - name: Upload artifacts to release
+        uses: softprops/action-gh-release@v1
+        if: startsWith(github.ref, 'refs/heads/')
+        with:
+          files: |
+            dist/*.dmg
+            dist/*.zip
+            dist/*.AppImage
+            dist/*.exe
+            dist/*.blockmap
+            dist/*.yml
+          token: ${{ secrets.GITHUB_TOKEN }}
+          tag_name: ${{ env.version }}
+          draft: false
+          prerelease: false
+          overwrite: true
