@@ -223,8 +223,9 @@ Le projet est maintenant **100% prêt au niveau du code** pour Linux et macOS. T
 
 ---
 
-## 📖 Guide de Tests
+## 📖 Guides Disponibles
 
+### Guide de Tests
 Un guide de tests détaillé est disponible dans **[TESTS.md](TESTS.md)** avec :
 - Instructions pas à pas pour chaque test
 - Commandes à exécuter
@@ -232,5 +233,18 @@ Un guide de tests détaillé est disponible dans **[TESTS.md](TESTS.md)** avec :
 - Solutions de dépannage
 - Checklist complète
 
-Consultez ce document pour effectuer tous les tests nécessaires avant de publier les versions Linux et macOS.
+### Guide de Correction macOS
+Un guide spécifique pour les problèmes macOS est disponible dans **[FIX_MACOS.md](FIX_MACOS.md)** avec :
+- Solution pour régénérer l'icône (remplacer celle du template)
+- Solutions pour le problème de lancement (Gatekeeper)
+- Instructions de diagnostic
+- Options de code signing et notarisation
+
+### Guide de Diagnostic macOS
+Un guide de diagnostic pour la page blanche est disponible dans **[DIAGNOSTIC_MACOS.md](DIAGNOSTIC_MACOS.md)** avec :
+- Comment vérifier les logs
+- Comment diagnostiquer les problèmes de chargement
+- Solutions étape par étape
+
+Consultez ces documents pour effectuer tous les tests et corrections nécessaires avant de publier les versions Linux et macOS.
 

@@ -15,7 +15,8 @@
         "dev": "cross-env-shell DEV_TOOL=open nodemon --exec npm start",
         "build": "cross-env ELECTRON_BUILDER_ALLOW_HANDLE_SYMLINK_AS_FILE=true node build.js --obf=true --build=platform",
         "build:test": "cross-env SKIP_UPDATE_CHECK=true ELECTRON_BUILDER_ALLOW_HANDLE_SYMLINK_AS_FILE=true node build.js --obf=true --build=platform",
-        "icon": "node build.js --icon=https://raw.githubusercontent.com/EarthKingdoms/EarthKingdoms-Launcher/master/src/assets/images/icon.png"
+        "icon": "node build.js --icon=https://raw.githubusercontent.com/EarthKingdoms/EarthKingdoms-Launcher/master/src/assets/images/icon.png",
+        "icon:local": "node build.js --icon=src/assets/images/icon.png"
     },
     "license": "CCANC",
     "nodemonConfig": {
@@ -33,7 +34,16 @@
         "mac": {
             "category": "public.app-category.games",
             "hardenedRuntime": false,
-            "gatekeeperAssess": false
+            "gatekeeperAssess": false,
+            "extendInfo": {
+                "NSHighResolutionCapable": true,
+                "NSRequiresAquaSystemAppearance": false,
+                "LSMinimumSystemVersion": "10.13.0"
+            },
+            "type": "distribution",
+            "identity": null,
+            "entitlements": null,
+            "entitlementsInherit": null
         }
     },
     "dependencies": {
