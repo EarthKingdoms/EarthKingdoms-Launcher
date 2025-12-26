@@ -121,21 +121,34 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           script: |
+            // Récupérer la version depuis package.json
+            const fs = require('fs');
+            const packageJson = JSON.parse(fs.readFileSync('package.json', 'utf8'));
+            const version = packageJson.version;
+            
+            console.log(`Recherche de la release pour le tag: ${version}`);
+            
             const { data: releases } = await github.rest.repos.listReleases({
               owner: context.repo.owner,
               repo: context.repo.repo,
             });
-            const release = releases.find(r => r.tag_name === '${{ env.version }}');
+            
+            console.log(`Nombre de releases trouvées: ${releases.length}`);
+            
+            const release = releases.find(r => r.tag_name === version || r.tag_name === `v${version}`);
+            
             if (release) {
               core.setOutput('id', release.id.toString());
               core.setOutput('upload_url', release.upload_url);
-              console.log('Release trouvée:', release.id);
+              console.log(`✅ Release trouvée: ID=${release.id}, Tag=${release.tag_name}`);
             } else {
-              core.setFailed('Release non trouvée pour le tag ${{ env.version }}');
+              console.log('Releases disponibles:');
+              releases.slice(0, 5).forEach(r => console.log(`  - ${r.tag_name} (ID: ${r.id})`));
+              core.setFailed(`Release non trouvée pour le tag ${version} ou v${version}`);
             }
       
       - name: Upload Windows artifacts to release
-        if: matrix.os == 'windows-latest' && steps.get_release.outputs.id
+        if: matrix.os == 'windows-latest' && steps.get_release.outputs.id != ''
         uses: actions/github-script@v6
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -144,7 +157,11 @@ jobs:
             const fs = require('fs');
             const path = require('path');
             const releaseId = '${{ steps.get_release.outputs.id }}';
-            const uploadUrl = '${{ steps.get_release.outputs.upload_url }}';
+            
+            if (!releaseId) {
+              core.setFailed('Release ID non disponible');
+              return;
+            }
             
             const distDir = 'dist';
             const filesToUpload = [
@@ -153,29 +170,68 @@ jobs:
               'latest.yml'
             ];
             
+            console.log(`Upload vers release ID: ${releaseId}`);
+            
             for (const fileName of filesToUpload) {
               const filePath = path.join(distDir, fileName);
               if (fs.existsSync(filePath)) {
                 const fileContent = fs.readFileSync(filePath);
                 const fileSize = fs.statSync(filePath).size;
                 
-                console.log(`Upload de ${fileName} (${fileSize} bytes)...`);
+                console.log(`📤 Upload de ${fileName} (${(fileSize / 1024 / 1024).toFixed(2)} MB)...`);
                 
-                await github.rest.repos.uploadReleaseAsset({
-                  owner: context.repo.owner,
-                  repo: context.repo.repo,
-                  release_id: parseInt(releaseId),
-                  name: fileName,
-                  data: fileContent,
-                  headers: {
-                    'content-type': fileName.endsWith('.exe') ? 'application/octet-stream' : 
-                                   fileName.endsWith('.yml') ? 'text/yaml' : 
-                                   'application/octet-stream',
-                    'content-length': fileSize
+                try {
+                  await github.rest.repos.uploadReleaseAsset({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    release_id: parseInt(releaseId),
+                    name: fileName,
+                    data: fileContent,
+                    headers: {
+                      'content-type': fileName.endsWith('.exe') ? 'application/octet-stream' : 
+                                     fileName.endsWith('.yml') ? 'text/yaml' : 
+                                     'application/octet-stream',
+                      'content-length': fileSize
+                    }
+                  });
+                  
+                  console.log(`✅ ${fileName} uploadé avec succès`);
+                } catch (error) {
+                  if (error.status === 422 && error.message.includes('already exists')) {
+                    console.log(`⚠️ ${fileName} existe déjà, remplacement...`);
+                    // Récupérer les assets existants et supprimer l'ancien
+                    const { data: assets } = await github.rest.repos.listReleaseAssets({
+                      owner: context.repo.owner,
+                      repo: context.repo.repo,
+                      release_id: parseInt(releaseId),
+                    });
+                    const existingAsset = assets.find(a => a.name === fileName);
+                    if (existingAsset) {
+                      await github.rest.repos.deleteReleaseAsset({
+                        owner: context.repo.owner,
+                        repo: context.repo.repo,
+                        asset_id: existingAsset.id,
+                      });
+                      // Réessayer l'upload
+                      await github.rest.repos.uploadReleaseAsset({
+                        owner: context.repo.owner,
+                        repo: context.repo.repo,
+                        release_id: parseInt(releaseId),
+                        name: fileName,
+                        data: fileContent,
+                        headers: {
+                          'content-type': fileName.endsWith('.exe') ? 'application/octet-stream' : 
+                                         fileName.endsWith('.yml') ? 'text/yaml' : 
+                                         'application/octet-stream',
+                          'content-length': fileSize
+                        }
+                      });
+                      console.log(`✅ ${fileName} remplacé avec succès`);
+                    }
+                  } else {
+                    throw error;
                   }
-                });
-                
-                console.log(`✅ ${fileName} uploadé avec succès`);
+                }
               } else {
                 console.log(`⚠️ Fichier non trouvé: ${filePath}`);
               }
