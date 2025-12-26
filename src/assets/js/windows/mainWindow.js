@@ -73,13 +73,39 @@ function createWindow() {
         htmlPath = possiblePaths[0];
     }
     
+    // Utiliser loadFile qui gère mieux les chemins relatifs dans l'ASAR
     mainWindow.loadFile(htmlPath).catch(err => {
         console.error('[MainWindow] ❌ Erreur lors du chargement:', err);
         console.error('[MainWindow] Chemin tenté:', htmlPath);
     });
+    
+    // Écouter les erreurs de chargement de ressources
+    mainWindow.webContents.on('did-fail-load', (event, errorCode, errorDescription, validatedURL) => {
+        console.error('[MainWindow] ❌ Échec de chargement:', {
+            errorCode,
+            errorDescription,
+            url: validatedURL
+        });
+    });
+    
+    // Écouter quand la page est chargée
+    mainWindow.webContents.on('did-finish-load', () => {
+        console.log('[MainWindow] ✅ Page chargée avec succès');
+        // Vérifier si le DOM est vide
+        mainWindow.webContents.executeJavaScript(`
+            console.log('[MainWindow] Contenu du body:', document.body.innerHTML.substring(0, 100));
+            document.body.children.length
+        `).then(count => {
+            if (count === 0) {
+                console.error('[MainWindow] ⚠️ Le body est vide ! Les assets ne se chargent peut-être pas.');
+            }
+        }).catch(err => console.error('[MainWindow] Erreur lors de la vérification du DOM:', err));
+    });
+    
     mainWindow.once('ready-to-show', () => {
         if (mainWindow) {
-            if (dev) mainWindow.webContents.openDevTools({ mode: 'detach' })
+            // Toujours ouvrir les DevTools en production pour diagnostiquer
+            mainWindow.webContents.openDevTools({ mode: 'detach' });
             mainWindow.show()
         }
     });

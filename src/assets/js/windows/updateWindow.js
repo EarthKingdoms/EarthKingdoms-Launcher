@@ -78,10 +78,25 @@ function createWindow() {
         console.error('[UpdateWindow] ❌ Erreur lors du chargement:', err);
         console.error('[UpdateWindow] Chemin tenté:', htmlPath);
     });
+    
+    // Écouter les erreurs de chargement
+    updateWindow.webContents.on('did-fail-load', (event, errorCode, errorDescription, validatedURL) => {
+        console.error('[UpdateWindow] ❌ Échec de chargement:', {
+            errorCode,
+            errorDescription,
+            url: validatedURL
+        });
+    });
+    
+    // Écouter quand la page est chargée
+    updateWindow.webContents.on('did-finish-load', () => {
+        console.log('[UpdateWindow] ✅ Page chargée avec succès');
+    });
 
     updateWindow.once('ready-to-show', () => {
         if(updateWindow) {
-            if(dev) updateWindow.webContents.openDevTools({ mode: 'detach' });
+            // Toujours ouvrir les DevTools pour diagnostiquer
+            updateWindow.webContents.openDevTools({ mode: 'detach' });
             updateWindow.show();
 
             updateWindow.webContents.send('app-version', packageJson.version);

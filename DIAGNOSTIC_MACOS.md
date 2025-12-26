@@ -60,21 +60,38 @@ npx asar list "/Applications/EarthKingdoms Launcher.app/Contents/Resources/app.a
 
 ### Solution 3 : Ouvrir les DevTools
 
-Si l'app se lance mais affiche une page blanche, ouvrez les DevTools :
+**Les DevTools s'ouvrent maintenant automatiquement** pour faciliter le diagnostic.
 
 1. Lancer l'app depuis le terminal (voir Étape 1)
-2. Les DevTools devraient s'ouvrir automatiquement
+2. Les DevTools s'ouvrent automatiquement
 3. Vérifier la console pour les erreurs JavaScript
 4. Vérifier l'onglet Network pour voir si les fichiers CSS/JS se chargent
+5. Vérifier l'onglet Console pour les logs `[MainWindow]` et `[UpdateWindow]`
+
+**Logs à chercher :**
+- `[MainWindow] AppPath: ...` - Le chemin de l'application
+- `[MainWindow] Fichier HTML trouvé: ...` - Le fichier HTML chargé
+- `[MainWindow] ✅ Page chargée avec succès` - Confirmation du chargement
+- `[MainWindow] ⚠️ Le body est vide !` - Problème de chargement des assets
 
 ## 📝 Informations à Fournir
 
 Si le problème persiste, fournissez :
 
-1. **Les logs complets** depuis le terminal
-2. **Les erreurs de la console** (DevTools)
-3. **La version de macOS** (`sw_vers`)
-4. **Le résultat de** `find "/Applications/EarthKingdoms Launcher.app" -name "*.html"`
+1. **Les logs complets** depuis le terminal (tous les messages `[MainWindow]` et `[UpdateWindow]`)
+2. **Les erreurs de la console** (DevTools) - Capture d'écran de l'onglet Console
+3. **L'onglet Network** (DevTools) - Voir quels fichiers CSS/JS ne se chargent pas
+4. **La version de macOS** (`sw_vers`)
+5. **Le résultat de** `find "/Applications/EarthKingdoms Launcher.app" -name "*.html"`
+6. **Le résultat de** `npx asar list "/Applications/EarthKingdoms Launcher.app/Contents/Resources/app.asar" | head -20`
+
+## 🔍 Diagnostic Automatique
+
+Les nouvelles versions incluent :
+- ✅ DevTools ouverts automatiquement pour diagnostic
+- ✅ Logs détaillés dans la console
+- ✅ Détection automatique des problèmes de chargement
+- ✅ Vérification automatique si le body est vide
 
 ## ✅ Corrections Appliquées
 

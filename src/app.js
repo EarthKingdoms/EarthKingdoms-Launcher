@@ -33,8 +33,14 @@ if(dev) {
 
 if(!app.requestSingleInstanceLock()) app.quit();
 else app.whenReady().then(() => {
+    // En production, toujours créer la fenêtre de mise à jour d'abord
+    // En dev, créer directement la fenêtre principale
     if(dev) return MainWindow.createWindow()
     UpdateWindow.createWindow()
+}).catch(err => {
+    console.error('[App] ❌ Erreur lors du démarrage:', err);
+    // En cas d'erreur, essayer de créer directement la fenêtre principale
+    MainWindow.createWindow();
 });
 
 ipcMain.on('main-window-open', () => MainWindow.createWindow())
