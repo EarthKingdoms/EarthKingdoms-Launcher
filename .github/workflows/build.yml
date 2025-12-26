@@ -113,15 +113,70 @@ jobs:
           ls -la dist/ || echo "Dossier dist/ non trouvé"
         shell: bash
       
-      - name: Upload artifacts to release (Windows only)
-        if: matrix.os == 'windows-latest' && startsWith(github.ref, 'refs/heads/')
-        uses: softprops/action-gh-release@v1
+      - name: Get release ID (Windows only)
+        if: matrix.os == 'windows-latest'
+        id: get_release
+        uses: actions/github-script@v6
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          files: |
-            dist/*.exe
-            dist/*.blockmap
-            dist/*.yml
-          tag_name: ${{ env.version }}
-          fail_on_unmatched_files: false
+          script: |
+            const { data: releases } = await github.rest.repos.listReleases({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+            });
+            const release = releases.find(r => r.tag_name === '${{ env.version }}');
+            if (release) {
+              core.setOutput('id', release.id.toString());
+              core.setOutput('upload_url', release.upload_url);
+              console.log('Release trouvée:', release.id);
+            } else {
+              core.setFailed('Release non trouvée pour le tag ${{ env.version }}');
+            }
+      
+      - name: Upload Windows artifacts to release
+        if: matrix.os == 'windows-latest' && steps.get_release.outputs.id
+        uses: actions/github-script@v6
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          script: |
+            const fs = require('fs');
+            const path = require('path');
+            const releaseId = '${{ steps.get_release.outputs.id }}';
+            const uploadUrl = '${{ steps.get_release.outputs.upload_url }}';
+            
+            const distDir = 'dist';
+            const filesToUpload = [
+              'EarthKingdoms-Launcher-win-x64.exe',
+              'EarthKingdoms-Launcher-win-x64.exe.blockmap',
+              'latest.yml'
+            ];
+            
+            for (const fileName of filesToUpload) {
+              const filePath = path.join(distDir, fileName);
+              if (fs.existsSync(filePath)) {
+                const fileContent = fs.readFileSync(filePath);
+                const fileSize = fs.statSync(filePath).size;
+                
+                console.log(`Upload de ${fileName} (${fileSize} bytes)...`);
+                
+                await github.rest.repos.uploadReleaseAsset({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  release_id: parseInt(releaseId),
+                  name: fileName,
+                  data: fileContent,
+                  headers: {
+                    'content-type': fileName.endsWith('.exe') ? 'application/octet-stream' : 
+                                   fileName.endsWith('.yml') ? 'text/yaml' : 
+                                   'application/octet-stream',
+                    'content-length': fileSize
+                  }
+                });
+                
+                console.log(`✅ ${fileName} uploadé avec succès`);
+              } else {
+                console.log(`⚠️ Fichier non trouvé: ${filePath}`);
+              }
+            }
