@@ -107,9 +107,17 @@ jobs:
         run: npm run build
         shell: bash
       
+      - name: List dist files
+        run: |
+          echo "Fichiers dans dist/:"
+          ls -la dist/ || echo "Dossier dist/ non trouvé"
+        shell: bash
+      
       - name: Upload artifacts to release
         uses: softprops/action-gh-release@v1
         if: startsWith(github.ref, 'refs/heads/')
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           files: |
             dist/*.dmg
@@ -118,8 +126,5 @@ jobs:
             dist/*.exe
             dist/*.blockmap
             dist/*.yml
-          token: ${{ secrets.GITHUB_TOKEN }}
           tag_name: ${{ env.version }}
-          draft: false
-          prerelease: false
-          overwrite: true
+          fail_on_unmatched_files: false
