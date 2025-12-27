@@ -65,30 +65,35 @@ class Index {
 
     async buildPlatform() {
         // Vérifier si la release existe déjà sur GitHub
-        console.log(`[Build] Vérification de l'existence de la version v${version} sur GitHub...`);
-        try {
-            // Vérifier avec et sans le prefixe 'v' car le workflow utilise la version brute
-            const checkTags = [version, `v${version}`];
-            let exists = false;
+        // On ignore cette vérification en CI car le workflow crée la release juste avant le build
+        if (process.env.GITHUB_ACTIONS) {
+            console.log(`[Build] Environnement CI détecté - Ignorer la vérification de la release.`);
+        } else {
+            console.log(`[Build] Vérification de l'existence de la version v${version} sur GitHub...`);
+            try {
+                // Vérifier avec et sans le prefixe 'v' car le workflow utilise la version brute
+                const checkTags = [version, `v${version}`];
+                let exists = false;
 
-            for (const tag of checkTags) {
-                const response = await nodeFetch(`https://api.github.com/repos/${repoOwner}/${repoName}/releases/tags/${tag}`);
-                if (response.status === 200) {
-                    exists = true;
-                    console.error(`\x1b[31m[Error] La release ${tag} existe déjà sur GitHub !\x1b[0m`);
-                    break;
+                for (const tag of checkTags) {
+                    const response = await nodeFetch(`https://api.github.com/repos/${repoOwner}/${repoName}/releases/tags/${tag}`);
+                    if (response.status === 200) {
+                        exists = true;
+                        console.error(`\x1b[31m[Error] La release ${tag} existe déjà sur GitHub !\x1b[0m`);
+                        break;
+                    }
                 }
-            }
 
-            if (exists) {
-                console.error(`\x1b[31m[Error] Veuillez augmenter la version dans package.json avant de build.\x1b[0m`);
-                process.exit(1);
-            } else {
-                console.log(`[Build] La version ${version} n'existe pas encore sur GitHub. Continuation...`);
+                if (exists) {
+                    console.error(`\x1b[31m[Error] Veuillez augmenter la version dans package.json avant de build.\x1b[0m`);
+                    process.exit(1);
+                } else {
+                    console.log(`[Build] La version ${version} n'existe pas encore sur GitHub. Continuation...`);
+                }
+            } catch (error) {
+                console.error(`[Build] Erreur lors de la vérification de la release:`, error.message);
+                console.warn(`[Build] On continue le build malgré l'erreur de vérification.`);
             }
-        } catch (error) {
-            console.error(`[Build] Erreur lors de la vérification de la release:`, error.message);
-            console.warn(`[Build] On continue le build malgré l'erreur de vérification.`);
         }
 
         await this.Obfuscate();
