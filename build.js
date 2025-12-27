@@ -7,7 +7,10 @@ const nodeFetch = require('node-fetch')
 const png2icons = require('png2icons');
 const { Jimp, JimpMime } = require('jimp');
 
-const { productName } = require('./package.json');
+const { productName, version, repository } = require('./package.json');
+const repoURL = repository.url.replace("git+", "").replace(".git", "").replace("https://github.com/", "").split("/");
+const repoOwner = repoURL[0];
+const repoName = repoURL[1];
 
 class Index {
     async init() {
@@ -61,9 +64,27 @@ class Index {
     }
 
     async buildPlatform() {
+        // Vérifier si la release existe déjà sur GitHub
+        console.log(`[Build] Vérification de l'existence de la version v${version} sur GitHub...`);
+        try {
+            const response = await nodeFetch(`https://api.github.com/repos/${repoOwner}/${repoName}/releases/tags/v${version}`);
+            if (response.status === 200) {
+                console.error(`\x1b[31m[Error] La release v${version} existe déjà sur GitHub !\x1b[0m`);
+                console.error(`\x1b[31m[Error] Veuillez augmenter la version dans package.json avant de build.\x1b[0m`);
+                process.exit(1);
+            } else if (response.status === 404) {
+                console.log(`[Build] La version v${version} n'existe pas encore. Continuation du build...`);
+            } else {
+                console.warn(`[Build] Impossible de vérifier l'existence de la release (Status: ${response.status}). On continue quand même...`);
+            }
+        } catch (error) {
+            console.error(`[Build] Erreur lors de la vérification de la release:`, error.message);
+            console.warn(`[Build] On continue le build malgré l'erreur de vérification.`);
+        }
+
         await this.Obfuscate();
         const platform = os.platform();
-        
+
         // Vérifier et générer l'icône macOS si nécessaire
         if (platform === 'darwin') {
             const iconPath = "./app/assets/images/icon.icns";
@@ -127,22 +148,22 @@ class Index {
                 category: "public.app-category.games",
                 target: [{ target: "dmg", arch: "universal" }, { target: "zip", arch: "universal" }]
             };
-            
+
             // Copier les fichiers d'aide dans le build si disponibles
             if (!fs.existsSync("./app")) fs.mkdirSync("./app", { recursive: true });
-            
+
             const readmePath = "./scripts/README-MACOS.txt";
             if (fs.existsSync(readmePath)) {
                 fs.copyFileSync(readmePath, "./app/README-MACOS.txt");
             }
-            
+
             const installScriptPath = "./scripts/install.command";
             if (fs.existsSync(installScriptPath)) {
                 fs.copyFileSync(installScriptPath, "./app/install.command");
                 // Rendre le script exécutable
                 fs.chmodSync("./app/install.command", 0o755);
             }
-            
+
             config.dmg = {
                 title: `${productName} ${require('./package.json').version}`,
                 background: null,
@@ -192,7 +213,7 @@ class Index {
 
     async iconSet(urlOrPath) {
         let image;
-        
+
         // Vérifier si c'est une URL ou un chemin local
         if (urlOrPath.startsWith('http://') || urlOrPath.startsWith('https://')) {
             // C'est une URL, télécharger l'image
@@ -212,7 +233,7 @@ class Index {
             }
             image = await Jimp.read(urlOrPath);
         }
-        
+
         // Redimensionner et générer les icônes
         image = await image.resize({ w: 256, h: 256 }).getBuffer(JimpMime.png);
         fs.writeFileSync("src/assets/images/icon.icns", png2icons.createICNS(image, png2icons.BILINEAR, 0));

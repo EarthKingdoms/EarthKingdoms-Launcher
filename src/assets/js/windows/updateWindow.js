@@ -18,7 +18,7 @@ function getWindow() {
 }
 
 function destroyWindow() {
-    if(!updateWindow) return;
+    if (!updateWindow) return;
     updateWindow.close();
     updateWindow = undefined;
 }
@@ -40,12 +40,12 @@ function createWindow() {
     });
     Menu.setApplicationMenu(null);
     updateWindow.setMenuBarVisibility(false);
-    
+
     // Détecter le bon chemin pour le fichier HTML
     const appPath = app.getAppPath();
     const fs = require("fs");
     const isDev = process.env.NODE_ENV === 'dev' || appPath.includes('node_modules');
-    
+
     // Essayer plusieurs chemins possibles
     const possiblePaths = [
         path.join(appPath, 'app', 'index.html'),      // Production (build)
@@ -54,10 +54,10 @@ function createWindow() {
         path.join(appPath, 'resources', 'app', 'app', 'index.html'), // ASAR unpacked
         path.join(appPath, 'resources', 'app', 'src', 'index.html'), // ASAR unpacked dev
     ];
-    
+
     console.log('[UpdateWindow] AppPath:', appPath);
     console.log('[UpdateWindow] IsDev:', isDev);
-    
+
     let htmlPath = null;
     for (const testPath of possiblePaths) {
         if (fs.existsSync(testPath)) {
@@ -66,19 +66,19 @@ function createWindow() {
             break;
         }
     }
-    
+
     if (!htmlPath) {
         console.error('[UpdateWindow] ❌ Aucun fichier index.html trouvé dans les chemins suivants:');
         possiblePaths.forEach(p => console.error('  -', p));
         // Utiliser le premier chemin par défaut
         htmlPath = possiblePaths[0];
     }
-    
+
     updateWindow.loadFile(htmlPath).catch(err => {
         console.error('[UpdateWindow] ❌ Erreur lors du chargement:', err);
         console.error('[UpdateWindow] Chemin tenté:', htmlPath);
     });
-    
+
     // Écouter les erreurs de chargement
     updateWindow.webContents.on('did-fail-load', (event, errorCode, errorDescription, validatedURL) => {
         console.error('[UpdateWindow] ❌ Échec de chargement:', {
@@ -87,16 +87,15 @@ function createWindow() {
             url: validatedURL
         });
     });
-    
+
     // Écouter quand la page est chargée
     updateWindow.webContents.on('did-finish-load', () => {
         console.log('[UpdateWindow] ✅ Page chargée avec succès');
     });
 
     updateWindow.once('ready-to-show', () => {
-        if(updateWindow) {
-            // Toujours ouvrir les DevTools pour diagnostiquer
-            updateWindow.webContents.openDevTools({ mode: 'detach' });
+        if (updateWindow) {
+            if (dev) updateWindow.webContents.openDevTools({ mode: 'detach' });
             updateWindow.show();
 
             updateWindow.webContents.send('app-version', packageJson.version);

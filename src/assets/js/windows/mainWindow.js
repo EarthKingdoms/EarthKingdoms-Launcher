@@ -40,11 +40,11 @@ function createWindow() {
     });
     Menu.setApplicationMenu(null);
     mainWindow.setMenuBarVisibility(false);
-    
+
     // Détecter le bon chemin pour le fichier HTML
     const appPath = app.getAppPath();
     const isDev = process.env.NODE_ENV === 'dev' || appPath.includes('node_modules');
-    
+
     // Essayer plusieurs chemins possibles
     const possiblePaths = [
         path.join(appPath, 'app', 'launcher.html'),      // Production (build)
@@ -53,10 +53,10 @@ function createWindow() {
         path.join(appPath, 'resources', 'app', 'app', 'launcher.html'), // ASAR unpacked
         path.join(appPath, 'resources', 'app', 'src', 'launcher.html'), // ASAR unpacked dev
     ];
-    
+
     console.log('[MainWindow] AppPath:', appPath);
     console.log('[MainWindow] IsDev:', isDev);
-    
+
     let htmlPath = null;
     for (const testPath of possiblePaths) {
         if (fs.existsSync(testPath)) {
@@ -65,20 +65,20 @@ function createWindow() {
             break;
         }
     }
-    
+
     if (!htmlPath) {
         console.error('[MainWindow] ❌ Aucun fichier launcher.html trouvé dans les chemins suivants:');
         possiblePaths.forEach(p => console.error('  -', p));
         // Utiliser le premier chemin par défaut
         htmlPath = possiblePaths[0];
     }
-    
+
     // Utiliser loadFile qui gère mieux les chemins relatifs dans l'ASAR
     mainWindow.loadFile(htmlPath).catch(err => {
         console.error('[MainWindow] ❌ Erreur lors du chargement:', err);
         console.error('[MainWindow] Chemin tenté:', htmlPath);
     });
-    
+
     // Écouter les erreurs de chargement de ressources
     mainWindow.webContents.on('did-fail-load', (event, errorCode, errorDescription, validatedURL) => {
         console.error('[MainWindow] ❌ Échec de chargement:', {
@@ -87,7 +87,7 @@ function createWindow() {
             url: validatedURL
         });
     });
-    
+
     // Écouter quand la page est chargée
     mainWindow.webContents.on('did-finish-load', () => {
         console.log('[MainWindow] ✅ Page chargée avec succès');
@@ -101,11 +101,10 @@ function createWindow() {
             }
         }).catch(err => console.error('[MainWindow] Erreur lors de la vérification du DOM:', err));
     });
-    
+
     mainWindow.once('ready-to-show', () => {
         if (mainWindow) {
-            // Toujours ouvrir les DevTools en production pour diagnostiquer
-            mainWindow.webContents.openDevTools({ mode: 'detach' });
+            if (dev) mainWindow.webContents.openDevTools({ mode: 'detach' });
             mainWindow.show()
         }
     });
