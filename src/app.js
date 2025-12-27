@@ -16,9 +16,7 @@ const MainWindow = require("./assets/js/windows/mainWindow.js");
 
 let dev = process.env.NODE_ENV === 'dev';
 
-// IMPORTANT: Définir le nom de l'application AVANT toute utilisation des chemins
-// Cela évite que les fichiers se sauvegardent dans .undefined
-const appName = (pkg.productName || pkg.name || 'EarthKingdoms-Launcher').replace(/\s+/g, '-');
+const appName = 'EarthKingdoms-Launcher';
 app.setName(appName);
 console.log(`[App] Nom de l'application défini: ${app.getName()}`);
 

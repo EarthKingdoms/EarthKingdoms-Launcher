@@ -688,8 +688,9 @@ class Home {
         }
 
         // Calculer le chemin de base pour l'instance
-        const basePath = `${await appdata()}/${process.platform == 'darwin' ? this.config.dataDirectory : `.${this.config.dataDirectory}`}`;
-        const instancePath = `${basePath}/instances/${options.name}`;
+        const dataDir = this.config.dataDirectory || 'EarthKingdoms-Launcher';
+        const basePath = path.join(await appdata(), (process.platform === 'darwin' ? dataDir : `.${dataDir}`));
+        const instancePath = path.join(basePath, 'instances', options.name);
 
         // Ajouter des options Java pour les logs de crash (utile pour diagnostiquer les crashes)
         // Ces options permettent de générer des logs détaillés si Java crash
