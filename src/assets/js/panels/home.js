@@ -570,7 +570,10 @@ class Home {
 
                 // Injecter le token validé dans les arguments Java
                 jvmArgs.push(`-Dearthkingdoms.token=${token}`);
-                jvmArgs.push(`-Dearthkingdoms.api.url=${authAPI.apiBaseUrl}/auth/launcher`);
+                jvmArgs.push(`-Dearthkingdoms.api.url=${authAPI.apiBaseUrl}`);
+
+                // Mettre à jour l'authentificateur avec le token valide
+                authenticator = updatedAccount;
 
                 // CRÉATION DU FICHIER .ek_auth (Requis pour le mod Client)
                 try {
@@ -580,19 +583,27 @@ class Home {
                         expires: updatedAccount.token_expires
                     };
 
-                    // Utiliser le chemin appData cross-platform via IPC
-                    const appDataPath = await ipcRenderer.invoke('app-data-path');
-                    const authFilePath = path.join(appDataPath, '.ek_auth');
-
-
-
+                    // Déterminer le chemin exact selon l'OS (Logique identique au Mod Java)
+                    let authFilePath;
+                    if (process.platform === 'win32') {
+                        // Windows: %APPDATA%
+                        authFilePath = path.join(process.env.APPDATA, '.ek_auth');
+                    } else {
+                        // Mac et Linux: Dossier Home (ex: /Users/Rin/.ek_auth)
+                        authFilePath = path.join(os.homedir(), '.ek_auth');
+                    }
 
                     fs.writeFileSync(authFilePath, JSON.stringify(authData, null, 2));
                     console.log(`[Home] ✅ Fichier .ek_auth créé dans: ${authFilePath}`);
 
+                    // Créer aussi le fichier dans le dossier de l'instance pour plus de sécurité
+                    const instanceAuthPath = path.join(instancePath, '.ek_auth');
+                    if (!fs.existsSync(instancePath)) fs.mkdirSync(instancePath, { recursive: true });
+                    fs.writeFileSync(instanceAuthPath, JSON.stringify(authData, null, 2));
+                    console.log(`[Home] ✅ Fichier .ek_auth doublé dans: ${instanceAuthPath}`);
+
                 } catch (fileErr) {
-                    console.error('[Home] ❌ Erreur lors de la création du fichier .ek_auth:', fileErr);
-                    // On ne bloque pas le lancement pour ça, mais c'est risqué si le mod est strict
+                    console.error('[Home] ❌ Erreur lors de la création des fichiers d\'auth:', fileErr);
                 }
 
             } catch (err) {
