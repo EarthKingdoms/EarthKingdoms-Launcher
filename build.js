@@ -12,6 +12,7 @@ const repoURL = repository.url.replace("git+", "").replace(".git", "").replace("
 const repoOwner = repoURL[0];
 const repoName = repoURL[1];
 
+
 class Index {
     async init() {
         process.env.ELECTRON_BUILDER_ALLOW_HANDLE_SYMLINK_AS_FILE = "true";
