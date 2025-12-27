@@ -70,45 +70,34 @@ class Splash {
         this.setStatus(`Recherche de mise à jour...`);
 
         ipcRenderer.invoke('update-app').then((result) => {
+            console.log('[Update] Résultat du check:', result);
             // Si updateInfo est null, c'est que la vérification a été désactivée (build local/test)
             if (result && result.updateInfo === null) {
-                console.log('[Update] Vérification désactivée - Passage à la vérification de maintenance');
+                console.log('[Update] Vérification désactivée par le processus principal - Passage à la maintenance');
                 callMaintenanceOnce();
                 return;
             }
-            // Si result est null ou undefined, continuer aussi
-            if (!result) {
-                console.log('[Update] Pas de résultat - Passage à la vérification de maintenance');
+
+            // Si on a un résultat mais pas d'updateInfo (cas rare)
+            if (result && !result.updateInfo) {
+                console.log('[Update] Aucune information de mise à jour reçue - Passage à la maintenance');
                 callMaintenanceOnce();
                 return;
             }
         }).catch(err => {
             // En cas d'erreur, continuer quand même (ne pas bloquer le launcher)
-            console.warn('[Update] Erreur lors de la vérification de mise à jour:', err);
+            console.warn('[Update] Erreur lors de l\'invocation de update-app:', err);
             callMaintenanceOnce();
         });
-
         ipcRenderer.on('updateAvailable', () => {
-            // Pour les builds de test, ne pas télécharger automatiquement
-            const isLocalBuild = window.location && (
-                window.location.href.includes('file://') ||
-                window.location.pathname.includes('dist') ||
-                window.location.pathname.includes('build')
-            );
-
-            if (isLocalBuild) {
-                console.log('[Update] Build local - Mise à jour disponible mais ignorée pour les tests');
-                callMaintenanceOnce();
-                return;
-            }
-
             this.setStatus(`Mise à jour disponible !`);
             if (os.platform() === 'win32') {
                 this.toggleProgress();
                 ipcRenderer.send('start-update');
+            } else {
+                return this.dowloadUpdate();
             }
-            else return this.dowloadUpdate();
-        })
+        });
 
         ipcRenderer.on('error', (event, err) => {
             if (err) return this.shutdown(`${err.message}`);
@@ -120,7 +109,7 @@ class Splash {
         })
 
         ipcRenderer.on('update-not-available', () => {
-            console.log('[Update] Mise à jour non disponible - Passage à la vérification de maintenance');
+            console.log('[Update] Le serveur indique qu\'aucune mise à jour n\'est disponible');
             callMaintenanceOnce();
         })
     }
