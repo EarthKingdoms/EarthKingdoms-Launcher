@@ -67,15 +67,24 @@ class Index {
         // Vérifier si la release existe déjà sur GitHub
         console.log(`[Build] Vérification de l'existence de la version v${version} sur GitHub...`);
         try {
-            const response = await nodeFetch(`https://api.github.com/repos/${repoOwner}/${repoName}/releases/tags/v${version}`);
-            if (response.status === 200) {
-                console.error(`\x1b[31m[Error] La release v${version} existe déjà sur GitHub !\x1b[0m`);
+            // Vérifier avec et sans le prefixe 'v' car le workflow utilise la version brute
+            const checkTags = [version, `v${version}`];
+            let exists = false;
+
+            for (const tag of checkTags) {
+                const response = await nodeFetch(`https://api.github.com/repos/${repoOwner}/${repoName}/releases/tags/${tag}`);
+                if (response.status === 200) {
+                    exists = true;
+                    console.error(`\x1b[31m[Error] La release ${tag} existe déjà sur GitHub !\x1b[0m`);
+                    break;
+                }
+            }
+
+            if (exists) {
                 console.error(`\x1b[31m[Error] Veuillez augmenter la version dans package.json avant de build.\x1b[0m`);
                 process.exit(1);
-            } else if (response.status === 404) {
-                console.log(`[Build] La version v${version} n'existe pas encore. Continuation du build...`);
             } else {
-                console.warn(`[Build] Impossible de vérifier l'existence de la release (Status: ${response.status}). On continue quand même...`);
+                console.log(`[Build] La version ${version} n'existe pas encore sur GitHub. Continuation...`);
             }
         } catch (error) {
             console.error(`[Build] Erreur lors de la vérification de la release:`, error.message);

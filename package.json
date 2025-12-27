@@ -1,7 +1,7 @@
 {
     "name": "earthkingdoms-launcher",
     "productName": "EarthKingdoms Launcher",
-    "version": "2.2.7",
+    "version": "2.2.8",
     "description": "Launcher Minecraft pour le serveur EarthKingdoms",
     "main": "src/app.js",
     "author": {

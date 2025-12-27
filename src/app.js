@@ -120,21 +120,25 @@ ipcMain.handle('update-app', async () => {
     })
 })
 
-autoUpdater.on('update-available', () => {
+autoUpdater.on('update-available', (info) => {
+    console.log('[Update] ✅ Mise à jour disponible:', info.version);
     const updateWindow = UpdateWindow.getWindow();
     if (updateWindow) updateWindow.webContents.send('updateAvailable');
 });
 
 ipcMain.on('start-update', () => {
+    console.log('[Update] 📥 Démarrage du téléchargement...');
     autoUpdater.downloadUpdate();
 })
 
-autoUpdater.on('update-not-available', () => {
+autoUpdater.on('update-not-available', (info) => {
+    console.log('[Update] ❌ Pas de mise à jour disponible (Version actuelle:', pkg.version, ')');
     const updateWindow = UpdateWindow.getWindow();
     if (updateWindow) updateWindow.webContents.send('update-not-available');
 });
 
-autoUpdater.on('update-downloaded', () => {
+autoUpdater.on('update-downloaded', (info) => {
+    console.log('[Update] 🚀 Mise à jour téléchargée, installation...');
     autoUpdater.quitAndInstall();
 });
 
@@ -144,6 +148,7 @@ autoUpdater.on('download-progress', (progress) => {
 })
 
 autoUpdater.on('error', (err) => {
+    console.error('[Update] ❌ Erreur auto-updater:', err);
     const updateWindow = UpdateWindow.getWindow();
     if (updateWindow) updateWindow.webContents.send('error', err);
 });
