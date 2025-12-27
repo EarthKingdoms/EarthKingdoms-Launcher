@@ -63,6 +63,7 @@ class Index {
         }
     }
 
+
     async buildPlatform() {
         // Vérifier si la release existe déjà sur GitHub
         // On ignore cette vérification en CI car le workflow crée la release juste avant le build
