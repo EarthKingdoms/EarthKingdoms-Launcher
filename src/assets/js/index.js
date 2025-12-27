@@ -57,7 +57,7 @@ class Splash {
             console.log('[Update] Mode dev - Ignorer la vérification de mise à jour');
             return this.maintenanceCheck();
         }
-        
+
         // Variable pour éviter les appels multiples à maintenanceCheck
         let maintenanceCalled = false;
         const callMaintenanceOnce = () => {
@@ -66,7 +66,7 @@ class Splash {
                 this.maintenanceCheck();
             }
         };
-        
+
         this.setStatus(`Recherche de mise à jour...`);
 
         ipcRenderer.invoke('update-app').then((result) => {
@@ -91,17 +91,17 @@ class Splash {
         ipcRenderer.on('updateAvailable', () => {
             // Pour les builds de test, ne pas télécharger automatiquement
             const isLocalBuild = window.location && (
-                window.location.href.includes('file://') || 
+                window.location.href.includes('file://') ||
                 window.location.pathname.includes('dist') ||
                 window.location.pathname.includes('build')
             );
-            
+
             if (isLocalBuild) {
                 console.log('[Update] Build local - Mise à jour disponible mais ignorée pour les tests');
                 callMaintenanceOnce();
                 return;
             }
-            
+
             this.setStatus(`Mise à jour disponible !`);
             if (os.platform() === 'win32') {
                 this.toggleProgress();
@@ -146,7 +146,7 @@ class Splash {
         let latest;
 
         if (os.platform() === 'darwin') latest = this.getLatestReleaseForOS('mac', '.dmg', latestRelease);
-        else if (os === 'linux') latest = this.getLatestReleaseForOS('linux', '.appimage', latestRelease);
+        else if (os.platform() === 'linux') latest = this.getLatestReleaseForOS('linux', '.appimage', latestRelease);
 
 
         this.setStatus(`Mise à jour disponible !<br><div class="download-update">Télécharger</div>`);

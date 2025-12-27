@@ -105,7 +105,7 @@ class Index {
         }
         const config = {
             generateUpdatesFilesForAllChannels: false,
-            appId: "EarthKingdoms Launcher",
+            appId: "com.earthkingdoms.launcher",
             productName: productName,
             copyright: '© 2025 EarthKingdoms',
             // Remplacer les espaces par des tirets pour correspondre au format dans latest.yml
@@ -178,8 +178,7 @@ class Index {
                 window: {
                     width: 540,
                     height: 400
-                },
-                additionalDMGBackground: null
+                }
             };
         } else {
             config.linux = {

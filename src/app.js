@@ -22,20 +22,20 @@ const appName = (pkg.productName || pkg.name || 'EarthKingdoms-Launcher').replac
 app.setName(appName);
 console.log(`[App] Nom de l'application défini: ${app.getName()}`);
 
-if(dev) {
+if (dev) {
     let appPath = path.resolve('./data/Launcher').replace(/\\/g, '/');
     let appdata = path.resolve('./data').replace(/\\/g, '/');
-    if(!fs.existsSync(appPath)) fs.mkdirSync(appPath, { recursive: true });
-    if(!fs.existsSync(appdata)) fs.mkdirSync(appdata, { recursive: true });
+    if (!fs.existsSync(appPath)) fs.mkdirSync(appPath, { recursive: true });
+    if (!fs.existsSync(appdata)) fs.mkdirSync(appdata, { recursive: true });
     app.setPath('userData', appPath);
     app.setPath('appData', appdata)
 }
 
-if(!app.requestSingleInstanceLock()) app.quit();
+if (!app.requestSingleInstanceLock()) app.quit();
 else app.whenReady().then(() => {
     // En production, toujours créer la fenêtre de mise à jour d'abord
     // En dev, créer directement la fenêtre principale
-    if(dev) return MainWindow.createWindow()
+    if (dev) return MainWindow.createWindow()
     UpdateWindow.createWindow()
 }).catch(err => {
     console.error('[App] ❌ Erreur lors du démarrage:', err);
@@ -66,7 +66,7 @@ ipcMain.handle('appData', e => app.getPath('appData'))
 ipcMain.handle('app-data-path', () => app.getPath('appData'))
 
 ipcMain.on('main-window-maximize', () => {
-    if(MainWindow.getWindow().isMaximized()) {
+    if (MainWindow.getWindow().isMaximized()) {
         MainWindow.getWindow().unmaximize();
     } else {
         MainWindow.getWindow().maximize();
@@ -81,8 +81,8 @@ ipcMain.handle('Microsoft-window', async (_, client_id) => {
 })
 
 ipcMain.handle('is-dark-theme', (_, theme) => {
-    if(theme === 'dark') return true
-    if(theme === 'light') return false
+    if (theme === 'dark') return true
+    if (theme === 'light') return false
     return nativeTheme.shouldUseDarkColors;
 })
 
@@ -96,20 +96,19 @@ ipcMain.handle('update-app', async () => {
         console.log('[Update] Mode dev - Vérification de mise à jour désactivée');
         return { updateInfo: null };
     }
-    
+
     // Désactiver aussi si SKIP_UPDATE_CHECK est défini (pour les builds de test)
     if (process.env.SKIP_UPDATE_CHECK === 'true') {
         console.log('[Update] SKIP_UPDATE_CHECK activé - Vérification désactivée pour les tests');
         return { updateInfo: null };
     }
-    
-    // Détecter si on est dans un build local (dossier dist)
-    const appPath = app.getAppPath();
-    if (appPath.includes('dist') || appPath.includes('\\dist\\') || appPath.includes('/dist/')) {
-        console.log('[Update] Build local détecté (dossier dist) - Vérification désactivée pour les tests');
+
+    // Désactiver aussi si on n'est pas dans un build packagé (dev local)
+    if (!app.isPackaged) {
+        console.log('[Update] Build non packagé détecté - Vérification désactivée');
         return { updateInfo: null };
     }
-    
+
     return await new Promise(async (resolve, reject) => {
         autoUpdater.checkForUpdates().then(res => {
             resolve(res);
@@ -123,7 +122,7 @@ ipcMain.handle('update-app', async () => {
 
 autoUpdater.on('update-available', () => {
     const updateWindow = UpdateWindow.getWindow();
-    if(updateWindow) updateWindow.webContents.send('updateAvailable');
+    if (updateWindow) updateWindow.webContents.send('updateAvailable');
 });
 
 ipcMain.on('start-update', () => {
@@ -132,7 +131,7 @@ ipcMain.on('start-update', () => {
 
 autoUpdater.on('update-not-available', () => {
     const updateWindow = UpdateWindow.getWindow();
-    if(updateWindow) updateWindow.webContents.send('update-not-available');
+    if (updateWindow) updateWindow.webContents.send('update-not-available');
 });
 
 autoUpdater.on('update-downloaded', () => {
@@ -141,10 +140,10 @@ autoUpdater.on('update-downloaded', () => {
 
 autoUpdater.on('download-progress', (progress) => {
     const updateWindow = UpdateWindow.getWindow();
-    if(updateWindow) updateWindow.webContents.send('download-progress', progress);
+    if (updateWindow) updateWindow.webContents.send('download-progress', progress);
 })
 
 autoUpdater.on('error', (err) => {
     const updateWindow = UpdateWindow.getWindow();
-    if(updateWindow) updateWindow.webContents.send('error', err);
+    if (updateWindow) updateWindow.webContents.send('error', err);
 });
